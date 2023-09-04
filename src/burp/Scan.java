@@ -42,7 +42,7 @@ abstract class Scan implements IScannerCheck {
         scanSettings.register("require consistent evidence", true, "Ignore less reliable issues");
 
         scanSettings.register("quantile factor", 5, "Divisor");
-        scanSettings.register("quantitative diff keys", "word_count", "Support ranges of quantitative values like word_count. Experimental.");
+        scanSettings.register("quantitative diff keys", "", "Support ranges of quantitative values like word_count. Experimental.");
         scanSettings.register("quantitative confirmations", 50, "The number of repeats used to confirm quantitative behaviour is consistent.");
         scanSettings.register("include origin in cachebusters", true);
         scanSettings.register("include path in cachebusters", false);
