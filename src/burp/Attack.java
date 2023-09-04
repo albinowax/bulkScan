@@ -71,8 +71,9 @@ class Attack {
     private void intialiseQuantitativeMeasurements(){
         List<String> keys = Arrays.asList(BulkUtilities.globalSettings.getString("quantitative diff keys").split(","));
         quantkeys = new HashSet<>(keys);
+        quantkeys.remove("");
         quantBoxes = new ArrayList<>();
-        for (String key: keys) {
+        for (String key: quantkeys) {
             quantBoxes.add(new QuantitativeMeasurements(key));
         }
     }
