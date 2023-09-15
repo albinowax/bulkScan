@@ -5,7 +5,8 @@ repositories {
 }
 
 dependencies {
-    implementation files('turbo-intruder-all.jar') // contains albinowaxUtils
+    // implementation files('turbo-intruder-all.jar') // contains albinowaxUtils
+    implementation files('albinowaxUtils-all.jar') // contains albinowaxUtils
 }
 
 sourceSets {

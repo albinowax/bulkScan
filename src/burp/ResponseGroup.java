@@ -22,8 +22,8 @@ class Attributes {
         fingerprint.put("reflections", Utilities.countMatches(response, "xz340fk".getBytes()));
         fingerprint.put("SSRF", Utilities.countMatches(response, "3b4uebjgjjr6z8rq3jsku8zjigz".getBytes()));
         fingerprint.put("status", resp.getStatus());
-        fingerprint.put("email", Utils.montoyaApi.utilities().byteUtils().countMatches(response, EMAIL));
-        fingerprint.put("ip", Utils.montoyaApi.utilities().byteUtils().countMatches(response, IP));
+        fingerprint.put("email", Utilities.montoyaApi.utilities().byteUtils().countMatches(response, EMAIL));
+        fingerprint.put("ip", Utilities.montoyaApi.utilities().byteUtils().countMatches(response, IP));
         fingerprint.put("useragent", Utilities.countMatches(response, "Mozilla/5.0".getBytes()));
         // fingerprint.put("phone", Utils.montoyaApi.utilities().byteUtils().countMatches(response, PHONE));
 

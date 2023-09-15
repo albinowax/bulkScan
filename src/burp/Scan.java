@@ -176,11 +176,11 @@ abstract class Scan implements IScannerCheck {
         return request(service, req, maxRetries, forceHTTP1, null);
     }
 
-    static Resp turboRequest(IHttpService service, byte[] req) {
-        throttle();
-        BulkUtilities.requestCount.incrementAndGet();
-        return TurboLib.request(service, req);
-    }
+//    static Resp turboRequest(IHttpService service, byte[] req) {
+//        throttle();
+//        BulkUtilities.requestCount.incrementAndGet();
+//        return TurboLib.request(service, req);
+//    }
 
     static void throttle() {
         int throttle = BulkUtilities.globalSettings.getInt("per-thread throttle");
@@ -198,9 +198,9 @@ abstract class Scan implements IScannerCheck {
             throw new RuntimeException("Aborting due to extension unload");
         }
 
-        if (Utilities.globalSettings.getBoolean("use turbo for requests")) {
-            return turboRequest(service, req);
-        }
+//        if (Utilities.globalSettings.getBoolean("use turbo for requests")) {
+//            return turboRequest(service, req);
+//        }
 
         IHttpRequestResponse iRequestResponse = null;
         BulkUtilities.requestCount.incrementAndGet();
