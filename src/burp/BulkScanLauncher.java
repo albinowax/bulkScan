@@ -20,7 +20,7 @@ class BulkScanLauncher {
 
         BulkUtilities.globalSettings.registerSetting("thread pool size", 8, "The maximum number of threads this tool will spin up. This roughly correlates with the number of concurrent requests. Increasing this value will make attacks run faster, and use more computer resources.");
         BulkUtilities.globalSettings.registerSetting("canary", BulkUtilities.randomString(8), "Static canary string used for input reflection detection sometimes");
-        BulkUtilities.globalSettings.registerSetting("use turbo for requests", false, "Use the Turbo Intruder request engine instead of Burp's");
+        // BulkUtilities.globalSettings.registerSetting("use turbo for requests", false, "Use the Turbo Intruder request engine instead of Burp's");
         ScanPool taskEngine = new ScanPool(BulkUtilities.globalSettings.getInt("thread pool size"), BulkUtilities.globalSettings.getInt("thread pool size"), 10, TimeUnit.MINUTES, tasks);
         BulkUtilities.globalSettings.registerListener("thread pool size", value -> {
             BulkUtilities.out("Updating active thread pool size to " + value);
