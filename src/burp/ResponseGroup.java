@@ -4,6 +4,7 @@ import burp.api.montoya.utilities.ByteUtils;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 
 
@@ -25,6 +26,7 @@ class Attributes {
         fingerprint.put("email", Utilities.montoyaApi.utilities().byteUtils().countMatches(response, EMAIL));
         fingerprint.put("ip", Utilities.montoyaApi.utilities().byteUtils().countMatches(response, IP));
         fingerprint.put("useragent", Utilities.countMatches(response, "Mozilla/5.0".getBytes()));
+        fingerprint.put("header-vars", Utilities.countMatches(response, "HTTP_".getBytes()));
         // fingerprint.put("phone", Utils.montoyaApi.utilities().byteUtils().countMatches(response, PHONE));
 
         // todo get header names (nick code from bulkscan)
@@ -55,6 +57,7 @@ public class ResponseGroup {
             firstResp = response;
         }
 
+        // todo use calculateFingerprint
         HashMap<String, Object> inputPrint = new Attributes(response).getFingerprint();
         HashMap<String, Object> generatedPrint = new HashMap<>();
         if (fingerprint == null) {
