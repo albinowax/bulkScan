@@ -160,6 +160,7 @@ public class BulkUtilities extends Utilities {
 
             int valueStart = i;
             int valueEnd;
+            StringBuilder value = new StringBuilder();
 
             while (true) {
                 char c = (char) request[i];
@@ -172,12 +173,12 @@ public class BulkUtilities extends Utilities {
                     valueEnd = i;
                     break;
                 }
-
+                value.append(c);
                 i++;
             }
 
             //BulkUtilities.out("Param: "+name.toString()+"="+value.toString() + " | " + (char) request[valueStart] + " to " + (char) request[valueEnd]);
-            params.add(new PartialParam(name.toString(), valueStart, valueEnd, IParameter.PARAM_URL));
+            params.add(new PartialParam(name.toString(), valueStart, valueEnd, IParameter.PARAM_URL, value.toString()));
             //BulkUtilities.out(BulkUtilities.helpers.bytesToString(new RawInsertionPoint(request, valueStart, valueEnd).buildRequest("injected".getBytes())));
         }
 

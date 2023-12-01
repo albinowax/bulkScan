@@ -1,12 +1,16 @@
 package burp;
 
+import burp.api.montoya.http.message.HttpRequestResponse;
+
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 
 public class CustomResponseGroup {
 
-    private Function<Resp, HashMap<String, Object>> calculateFingerprint;
+    private Function<HttpRequestResponse, HashMap<String, Object>> calculateFingerprint;
     private HashMap<String, Object> fingerprint;
     public Resp getFirstResp() {
         return firstResp;
@@ -14,13 +18,18 @@ public class CustomResponseGroup {
 
     private Resp firstResp;
 
-    public CustomResponseGroup(Function<Resp, HashMap<String, Object>> calculateFingerprint) {
+    public CustomResponseGroup(Function<HttpRequestResponse, HashMap<String, Object>> calculateFingerprint, HttpRequestResponse resp) {
+        this.calculateFingerprint = calculateFingerprint;
+        add(resp);
+    }
+
+    public CustomResponseGroup(Function<HttpRequestResponse, HashMap<String, Object>> calculateFingerprint) {
         this.calculateFingerprint = calculateFingerprint;
     }
 
-    CustomResponseGroup add(Resp response) {
+    CustomResponseGroup add(HttpRequestResponse response) {
         if (firstResp == null) {
-            firstResp = response;
+            firstResp = new Resp(response);
         }
 
         // todo use calculateFingerprint
@@ -33,7 +42,7 @@ public class CustomResponseGroup {
 
         for (String key: inputPrint.keySet()) {
             if (fingerprint.containsKey(key)) {
-                if (fingerprint.get(key).equals(inputPrint.get(key))) {
+                if (Objects.equals(fingerprint.get(key), inputPrint.get(key))) {
                     generatedPrint.put(key, fingerprint.get(key));
                 } else {
                     Utilities.out("Throwing out "+key+" due to name diff: "+fingerprint.get(key)+":"+inputPrint.get(key));
@@ -45,17 +54,28 @@ public class CustomResponseGroup {
         return this;
     }
 
-    boolean matches(Resp response) {
+    boolean matches(HttpRequestResponse response) {
         HashMap<String, Object> inputPrint = calculateFingerprint.apply(response);
         for (String key: fingerprint.keySet()) {
-            if (!fingerprint.get(key).equals(inputPrint.get(key))) {
+            if (!Objects.equals(fingerprint.get(key), inputPrint.get(key))) {
                 return false;
             }
         }
         return true;
     }
 
-    String describeDiff(Resp response) {
+    ArrayList<String> diffKeys(HttpRequestResponse response) {
+        ArrayList<String> diffKeys = new ArrayList<>();
+        HashMap<String, Object> inputPrint = calculateFingerprint.apply(response);
+        for (String key: fingerprint.keySet()) {
+            if (!fingerprint.get(key).equals(inputPrint.get(key))) {
+                diffKeys.add(key);
+            }
+        }
+        return diffKeys;
+    }
+
+    String describeDiff(HttpRequestResponse response) {
         HashMap<String, Object> inputPrint = calculateFingerprint.apply(response);
         StringBuilder diff = new StringBuilder();
         diff.append("attribute expected:attack<br>\n");
@@ -72,7 +92,7 @@ public class CustomResponseGroup {
         return diff.toString();
     }
 
-    public String toString() {
+    public String toString() {;
         StringBuilder out = new StringBuilder();
         for (Map.Entry<String, Object> e: fingerprint.entrySet()) {
             out.append(e.getKey());

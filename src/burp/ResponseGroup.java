@@ -70,7 +70,7 @@ public class ResponseGroup {
                 if (fingerprint.get(key).equals(inputPrint.get(key))) {
                     generatedPrint.put(key, fingerprint.get(key));
                 } else {
-                    Utilities.out("Throwing out "+key+" due to name diff: "+fingerprint.get(key)+":"+inputPrint.get(key));
+                    //Utilities.out("Throwing out "+key+" due to value diff: "+fingerprint.get(key)+":"+inputPrint.get(key));
                 }
             }
         }

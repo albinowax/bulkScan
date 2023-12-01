@@ -32,7 +32,6 @@ abstract class Scan implements IScannerCheck {
         scanSettings.register("mimetype-filter", "", "Only scan responses with the configured string in their mimetype");
         scanSettings.register("resp-filter", "", "Only scan requests with responses containing the configured string.");
         scanSettings.register("filter HTTP", false, "Only scan HTTPS requests");
-        scanSettings.register("timeout", 10, "The time after quick a response is considered to have timed out. Tweak with caution, and be sure to adjust Burp's request timeout to match.");
         scanSettings.register("skip vulnerable hosts", false, "Don't scan hosts already flagged as vulnerable during this scan. Reload the extension to clear flags.");
         scanSettings.register("skip flagged hosts", false, "Don't report issues on hosts already flagged as vulnerable");
         scanSettings.register("flag new domains", false, "Adjust the title of issues reported on hosts that don't have any other issues listed in the sitemap");
@@ -103,12 +102,19 @@ abstract class Scan implements IScannerCheck {
         BulkScanLauncher.getTaskEngine().candidates.incrementAndGet();
     }
 
+    static void recordFinding() {
+        BulkScanLauncher.getTaskEngine().findings.incrementAndGet();
+    }
+
+
+
     static void report(String title, String detail, Resp... requests) {
         report(title, detail, null, requests);
     }
 
 
     static void report(String title, String detail, byte[] baseBytes, Resp... requests) {
+        recordFinding();
         IHttpRequestResponse base = requests[0].getReq();
         IHttpService service = base.getHttpService();
 
