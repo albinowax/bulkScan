@@ -158,8 +158,9 @@ class ScanItem {
             if (param.getType() != IParameter.PARAM_URL) {
                 continue;
             }
-            items.add(new ScanItem(req, config, scan, param));
+            items.add(new ScanItem(req, config, scan, param, new ParamInsertionPoint(req.getRequest(), param)));
         }
+        //req.getRequest(), param.getName(), param.getValueStart(), param.getValueEnd(), param.getType()
         return items;
     }
 

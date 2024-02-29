@@ -1,5 +1,6 @@
 package burp;
 
+import javax.swing.text.Utilities;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
@@ -9,7 +10,6 @@ class RawInsertionPoint implements IScannerInsertionPoint {
     private byte[] suffix;
     private String baseValue;
     private String name;
-
     private byte type;
 
     byte[] req;

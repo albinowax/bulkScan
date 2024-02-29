@@ -79,6 +79,11 @@ class BulkScan implements Runnable  {
                     BulkUtilities.out("Skipping null request - not sure how that got there");
                     continue;
                 }
+//
+//                if (reqs.length > 10000 && req.getResponse().length > 500000) {
+//                    continue;
+//                }
+
                 reqlist.add(new ScanItem(req, config, scan));
             }
 
