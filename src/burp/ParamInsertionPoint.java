@@ -10,8 +10,13 @@ public class ParamInsertionPoint implements IScannerInsertionPoint {
     ParamInsertionPoint(byte[] request, IParameter param) {
         this.request = request;
         this.name = param.getName();
-        this.value = param.getValue();
         this.type = param.getType();
+        this.value = param.getValue();
+
+        // fixme need to decode this first if it's a sketchy param
+        if (type == INS_PARAM_URL) {
+            value = Utilities.decodeParam(value);
+        }
     }
 
     ParamInsertionPoint(byte[] request, String name, String value, byte type) {

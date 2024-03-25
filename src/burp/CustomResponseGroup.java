@@ -56,12 +56,17 @@ public class CustomResponseGroup {
 
     boolean matches(HttpRequestResponse response) {
         HashMap<String, Object> inputPrint = calculateFingerprint.apply(response);
+
         for (String key: fingerprint.keySet()) {
             if (!Objects.equals(fingerprint.get(key), inputPrint.get(key))) {
                 return false;
             }
         }
         return true;
+    }
+
+    boolean badFingerprint() {
+        return fingerprint.isEmpty();
     }
 
     ArrayList<String> diffKeys(HttpRequestResponse response) {
