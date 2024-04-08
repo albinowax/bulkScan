@@ -1,5 +1,8 @@
 package burp;
 
+import burp.api.montoya.http.message.HttpRequestResponse;
+import burp.api.montoya.http.message.requests.HttpRequest;
+import burp.api.montoya.http.message.responses.HttpResponse;
 import org.apache.commons.lang3.NotImplementedException;
 
 import java.util.ArrayList;
@@ -142,20 +145,27 @@ abstract class Scan implements IScannerCheck {
         if (BulkUtilities.isBurpPro()) {
             BulkUtilities.callbacks.addScanIssue(new CustomScanIssue(service, BulkUtilities.getURL(base.getRequest(), service), reqsToReport.toArray(new IHttpRequestResponse[0]), title, detail, "High", "Tentative", "."));
         } else {
-            StringBuilder serialisedIssue = new StringBuilder();
-            serialisedIssue.append("Found issue: ");
-            serialisedIssue.append(title);
-            serialisedIssue.append("\n");
-            serialisedIssue.append("Target: ");
-            serialisedIssue.append(service.getProtocol());
-            serialisedIssue.append("://");
-            serialisedIssue.append(service.getHost());
-            serialisedIssue.append("\n");
-            serialisedIssue.append(detail);
-            serialisedIssue.append("\n");
-            serialisedIssue.append("Evidence: \n======================================\n");
-            for (IHttpRequestResponse req : reqsToReport) {
-                serialisedIssue.append(BulkUtilities.helpers.bytesToString(req.getRequest()));
+            reportToOutput(title, service, detail, reqsToReport);
+        }
+
+        reportToOrganiser(title, service, detail, reqsToReport);
+    }
+
+    static void reportToOutput(String title, IHttpService service, String detail, ArrayList<IHttpRequestResponse> reqsToReport) {
+        StringBuilder serialisedIssue = new StringBuilder();
+        serialisedIssue.append("Found issue: ");
+        serialisedIssue.append(title);
+        serialisedIssue.append("\n");
+        serialisedIssue.append("Target: ");
+        serialisedIssue.append(service.getProtocol());
+        serialisedIssue.append("://");
+        serialisedIssue.append(service.getHost());
+        serialisedIssue.append("\n");
+        serialisedIssue.append(detail);
+        serialisedIssue.append("\n");
+        serialisedIssue.append("Evidence: \n======================================\n");
+        for (IHttpRequestResponse req : reqsToReport) {
+            serialisedIssue.append(BulkUtilities.helpers.bytesToString(req.getRequest()));
 //                serialisedIssue.append("\n--------------------------------------\n");
 //                if (req.getResponse() == null) {
 //                    serialisedIssue.append("[no response]");
@@ -163,10 +173,18 @@ abstract class Scan implements IScannerCheck {
 //                else {
 //                    serialisedIssue.append(BulkUtilities.helpers.bytesToString(req.getResponse()));
 //                }
-                serialisedIssue.append("\n======================================\n");
-            }
+            serialisedIssue.append("\n======================================\n");
+        }
 
-            BulkUtilities.out(serialisedIssue.toString());
+        BulkUtilities.out(serialisedIssue.toString());
+    }
+
+    static void reportToOrganiser(String title, IHttpService service, String detail, ArrayList<IHttpRequestResponse> reqsToReport) {
+        for (IHttpRequestResponse req : reqsToReport) {
+            HttpRequestResponse montoyaReq = Utilities.buildMontoyaResp(new Resp(req));
+            montoyaReq.annotations().setNotes(title +"\n\n"+detail);
+            BulkUtilities.montoyaApi.organizer().sendToOrganizer(montoyaReq);
+            break;
         }
     }
 

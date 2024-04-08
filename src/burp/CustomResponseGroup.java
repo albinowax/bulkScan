@@ -97,7 +97,7 @@ public class CustomResponseGroup {
         return diff.toString();
     }
 
-    public String toString() {;
+    public String toString() {
         StringBuilder out = new StringBuilder();
         for (Map.Entry<String, Object> e: fingerprint.entrySet()) {
             out.append(e.getKey());
