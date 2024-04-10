@@ -37,6 +37,10 @@ public class QuantitativeMeasurements {
                 Collections.max(o.measurements) > Collections.min(measurements)-OFFSET;
     }
 
+    public String quantileRange() {
+        return measurements.get(0) + "-" + getQuantileTop(measurements);
+    }
+
     private boolean quantileOverlap(QuantitativeMeasurements compareMeasurements) {
         ArrayList<Long> compare = compareMeasurements.measurements;
         return compare.get(0) <= getQuantileTop(measurements) &&

@@ -38,6 +38,7 @@ abstract class Scan implements IScannerCheck {
         scanSettings.register("skip vulnerable hosts", false, "Don't scan hosts already flagged as vulnerable during this scan. Reload the extension to clear flags.");
         scanSettings.register("skip flagged hosts", false, "Don't report issues on hosts already flagged as vulnerable");
         scanSettings.register("flag new domains", false, "Adjust the title of issues reported on hosts that don't have any other issues listed in the sitemap");
+        scanSettings.register("report to organizer", false, "Send detected vulnerabilities to the Organizer");
 
         // specific-scan settings TODO remove
         scanSettings.register("confirmations", 5, "The number of repeats used to confirm behaviour is consistent. Increase this to reduce false positives caused by random noise");
@@ -148,7 +149,9 @@ abstract class Scan implements IScannerCheck {
             reportToOutput(title, service, detail, reqsToReport);
         }
 
-        reportToOrganiser(title, service, detail, reqsToReport);
+        if (Utilities.globalSettings.getBoolean("report to organizer")) {
+            reportToOrganiser(title, service, detail, reqsToReport);
+        }
     }
 
     static void reportToOutput(String title, IHttpService service, String detail, ArrayList<IHttpRequestResponse> reqsToReport) {
