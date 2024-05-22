@@ -192,7 +192,7 @@ public class BulkUtilities extends Utilities {
 //        }
         int start = BulkUtilities.helpers.indexOf(request, target.getBytes(), true, 0, request.length);
         if (start == -1) {
-            throw new RuntimeException("Failed to find target");
+            throw new RuntimeException("Failed to find target "+new String(request));
         }
         int end = start + target.length();
         return new PartialParam(name, start, end);

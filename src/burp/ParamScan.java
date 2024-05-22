@@ -15,6 +15,7 @@ abstract class ParamScan extends Scan {
         scanSettings.register("params: body", true, "When doing a parameter-based scan, scan body params");
         scanSettings.register("params: xff", false, "When doing a parameter-based scan, scan XFF");
         scanSettings.register("params: cookie", false, "When doing a parameter-based scan, scan cookies");
+        scanSettings.register("params: rest", false, "When doing a parameter-based scan, scan potential REST parameters");
         scanSettings.register("params: scheme", false, "When doing a parameter-based scan over HTTP/2, scan the :scheme header");
         scanSettings.register("params: scheme-host", false, "When doing a parameter-based scan over HTTP/2, create a fake host in the :scheme header and scan it");
         scanSettings.register("params: scheme-path", false, "When doing a parameter-based scan over HTTP/2, create a fake path in the :scheme header and scan it");

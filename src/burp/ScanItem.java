@@ -100,12 +100,31 @@ class ScanItem {
             }
         }
 
-        if(BulkUtilities.globalSettings.getBoolean("params: xff")) {
+        if (BulkUtilities.globalSettings.getBoolean("params: xff")) {
             //String fakeIP = "demo."+req.getHttpService().getHost();
             String fakeIP = "8.8.8.8";
             byte[] updated = BulkUtilities.addOrReplaceHeader(req.getRequest(), "X-Forwarded-For", fakeIP);
             Req newReq = new Req(updated, req.getResponse(), req.getHttpService());
             items.add(new ScanItem(newReq, config, scan, BulkUtilities.paramify(updated, "XFF", fakeIP, fakeIP)));
+        }
+
+        // scan the path, but only if there's no extension
+        if (BulkUtilities.globalSettings.getBoolean("params: rest")) {
+            String finalPathValue = ScanItem.getFinalFolder(req.getRequest());
+            if (!"".equals(finalPathValue)) {
+                String fakeValue = "kdlodjalszz";
+                //"cow".replaceFirst(finalPathValue+[])
+                Utilities.out("'"+finalPathValue+"'");
+                String path = Utilities.getPathFromRequest(req.getRequest());
+                byte[] updated;
+                if (path.contains(finalPathValue+" ")) {
+                    updated = Utilities.replaceFirst(req.getRequest(), finalPathValue+" ", fakeValue+" ");
+                } else {
+                    updated = Utilities.replaceFirst(req.getRequest(), finalPathValue+"?", fakeValue+"?");
+                }
+                Req newReq = new Req(updated, req.getResponse(), req.getHttpService());
+                items.add(new ScanItem(newReq, config, scan, BulkUtilities.paramify(updated, "path", fakeValue, finalPathValue)));
+            }
         }
 
         // fixme analyzeRequest is really slow, should implement this stuff myself
@@ -225,6 +244,25 @@ class ScanItem {
         this.key = key.toString();
 
         return this.key;
+    }
+
+    static String getFinalFolder(byte[] req) {
+        if (!"".equals(Utilities.getExtension(req))) {
+            return "";
+        }
+
+        String path = Utilities.getPathFromRequest(req).split("[?]")[0];
+        if ("/".equals(path)) {
+            return "";
+        }
+
+        String[] folders = path.split("/");
+        if (folders.length < 3) {
+            return "";
+        }
+
+        String folder = folders[folders.length-1];
+        return folder;
     }
 
 }
