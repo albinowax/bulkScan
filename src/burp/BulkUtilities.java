@@ -195,7 +195,7 @@ public class BulkUtilities extends Utilities {
             throw new RuntimeException("Failed to find target "+new String(request));
         }
         int end = start + target.length();
-        return new PartialParam(name, start, end);
+        return new PartialParam(name, start, end, fakeBaseValue);
     }
 
     static IScanIssue reportReflectionIssue(Attack[] attacks, IHttpRequestResponse baseRequestResponse) {

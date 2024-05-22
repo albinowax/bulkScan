@@ -37,7 +37,7 @@ class ScanItem {
         this.host = req.getHttpService().getHost();
         this.config = config;
         this.param = param;
-        insertionPoint = new RawInsertionPoint(req.getRequest(), param.getName(), param.getValueStart(), param.getValueEnd(), param.getType());
+        insertionPoint = new RawInsertionPoint(req.getRequest(), param.getName(), param.getValueStart(), param.getValueEnd(), param.getType(), param.getValue());
         this.prepared = true;
         this.scan = scan;
     }
@@ -113,8 +113,6 @@ class ScanItem {
             String finalPathValue = ScanItem.getFinalFolder(req.getRequest());
             if (!"".equals(finalPathValue)) {
                 String fakeValue = "kdlodjalszz";
-                //"cow".replaceFirst(finalPathValue+[])
-                Utilities.out("'"+finalPathValue+"'");
                 String path = Utilities.getPathFromRequest(req.getRequest());
                 byte[] updated;
                 if (path.contains(finalPathValue+" ")) {

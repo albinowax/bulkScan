@@ -12,7 +12,7 @@ class PartialParam implements IParameter {
     }
 
     PartialParam(String name, int valueStart, int valueEnd, String fakeValue) {
-        this(name, valueStart, valueEnd, IParameter.PARAM_COOKIE, null);
+        this(name, valueStart, valueEnd, IParameter.PARAM_COOKIE, fakeValue);
     }
 
     PartialParam(String name, int valueStart, int valueEnd, byte type) {
