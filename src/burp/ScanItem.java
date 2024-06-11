@@ -113,12 +113,14 @@ class ScanItem {
             String finalPathValue = ScanItem.getFinalFolder(req.getRequest());
             if (!"".equals(finalPathValue)) {
                 String fakeValue = "kdlodjalszz";
+                //"cow".replaceFirst(finalPathValue+[])
+                //Utilities.out("'"+finalPathValue+"'");
                 String path = Utilities.getPathFromRequest(req.getRequest());
                 byte[] updated;
-                if (path.contains(finalPathValue+" ")) {
-                    updated = Utilities.replaceFirst(req.getRequest(), finalPathValue+" ", fakeValue+" ");
-                } else {
+                if (path.contains(finalPathValue+"?")) { // fixme this makes no sense at all
                     updated = Utilities.replaceFirst(req.getRequest(), finalPathValue+"?", fakeValue+"?");
+                } else {
+                    updated = Utilities.replaceFirst(req.getRequest(), finalPathValue+" ", fakeValue+" ");
                 }
                 Req newReq = new Req(updated, req.getResponse(), req.getHttpService());
                 items.add(new ScanItem(newReq, config, scan, BulkUtilities.paramify(updated, "path", fakeValue, finalPathValue)));
@@ -250,7 +252,7 @@ class ScanItem {
         }
 
         String path = Utilities.getPathFromRequest(req).split("[?]")[0];
-        if ("/".equals(path)) {
+        if ("/".equals(path) || path.endsWith("/")) {
             return "";
         }
 
