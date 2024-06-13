@@ -44,7 +44,7 @@ abstract class Scan implements IScannerCheck {
         scanSettings.register("confirmations", 5, "The number of repeats used to confirm behaviour is consistent. Increase this to reduce false positives caused by random noise");
         scanSettings.register("require consistent evidence", true, "Ignore less reliable issues");
 
-        scanSettings.register("quantile factor", 5, "Divisor");
+        scanSettings.register("quantile factor", 2, "1-10. Lower means fewer false positives. Higher means fewer false negatives.");
         scanSettings.register("quantitative diff keys", "", "Support ranges of quantitative values like word_count. Experimental.");
         scanSettings.register("quantitative confirmations", 50, "The number of repeats used to confirm quantitative behaviour is consistent.");
         scanSettings.register("include origin in cachebusters", true);

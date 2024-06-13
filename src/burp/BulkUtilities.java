@@ -178,6 +178,7 @@ public class BulkUtilities extends Utilities {
             }
 
             //BulkUtilities.out("Param: "+name.toString()+"="+value.toString() + " | " + (char) request[valueStart] + " to " + (char) request[valueEnd]);
+
             params.add(new PartialParam(name.toString(), valueStart, valueEnd, IParameter.PARAM_URL, value.toString()));
             //BulkUtilities.out(BulkUtilities.helpers.bytesToString(new RawInsertionPoint(request, valueStart, valueEnd).buildRequest("injected".getBytes())));
         }
