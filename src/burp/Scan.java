@@ -1,5 +1,6 @@
 package burp;
 
+import burp.api.montoya.http.HttpMode;
 import burp.api.montoya.http.message.HttpRequestResponse;
 import burp.api.montoya.http.message.requests.HttpRequest;
 import burp.api.montoya.http.message.responses.HttpResponse;
@@ -215,6 +216,19 @@ abstract class Scan implements IScannerCheck {
 
     static Resp request(IHttpService service, byte[] req, int maxRetries, boolean forceHTTP1) {
         return request(service, req, maxRetries, forceHTTP1, null);
+    }
+
+    static HttpRequestResponse request(HttpRequest req, boolean forceHTTP1) {
+        if (BulkUtilities.unloaded.get()) {
+            throw new RuntimeException("Aborting due to extension unload");
+        }
+
+        HttpMode mode = HttpMode.AUTO;
+        if (forceHTTP1) {
+            mode = HttpMode.HTTP_1;
+        }
+
+        return Utilities.montoyaApi.http().sendRequest(req, mode);
     }
 
 //    static Resp turboRequest(IHttpService service, byte[] req) {
