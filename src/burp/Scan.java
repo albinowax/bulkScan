@@ -116,6 +116,20 @@ abstract class Scan implements IScannerCheck {
         report(title, detail, null, requests);
     }
 
+    static void report(String title, String detail, HttpRequestResponse... requests) {
+        report(title, detail, null, requests);
+    }
+
+
+    static void report(String title, String detail, byte[] baseBytes, HttpRequestResponse... requests) {
+        ArrayList<Resp> responses = new ArrayList<>();
+        for (HttpRequestResponse req: requests) {
+            responses.add(new Resp(req));
+        }
+
+        report(title, detail, baseBytes, responses.toArray(new Resp[0]));
+    }
+
 
     static void report(String title, String detail, byte[] baseBytes, Resp... requests) {
         recordFinding();
