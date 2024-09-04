@@ -48,6 +48,7 @@ abstract class Scan implements IScannerCheck {
         scanSettings.register("quantile factor", 2, "1-10. Higher means fewer false positives. Lower means fewer false negatives.");
         scanSettings.register("quantitative diff keys", "", "Support ranges of quantitative values like word_count. Experimental.");
         scanSettings.register("quantitative confirmations", 50, "The number of repeats used to confirm quantitative behaviour is consistent.");
+        scanSettings.register("include query-param in cachebusters", true);
         scanSettings.register("include origin in cachebusters", true);
         scanSettings.register("include path in cachebusters", false);
         scanSettings.register("include via in cachebusters", true);
