@@ -18,7 +18,9 @@ public class BulkUtilities extends Utilities {
         req.setHighlight(leftAnchor+payload+rightAnchor);
         return new Attack(req, null, payload, "");
     }
-
+    public static void registerContextMenu() {
+        montoyaApi.userInterface().registerContextMenuItemsProvider(new BulkScanContextMenu(BulkScan.scans));
+    }
     static boolean similarIsh(Attack noBreakGroup, Attack breakGroup, Attack noBreak, Attack doBreak) {
 
         for (String key: noBreakGroup.getPrint().keySet()) {
