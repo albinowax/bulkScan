@@ -1,5 +1,7 @@
 package burp;
 
+import javax.swing.*;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -11,7 +13,7 @@ class BulkScanLauncher {
 
     BulkScanLauncher(List<Scan> scans) {
         taskEngine = buildTaskEngine();
-        BulkUtilities.callbacks.registerContextMenuFactory(new OfferBulkScan(scans));
+//        BulkUtilities.callbacks.registerContextMenuFactory(new OfferBulkScan(scans));
     }
 
     private static ScanPool buildTaskEngine() {
