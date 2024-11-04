@@ -3,9 +3,6 @@ package burp;
 import burp.api.montoya.http.HttpMode;
 import burp.api.montoya.http.message.HttpRequestResponse;
 import burp.api.montoya.http.message.requests.HttpRequest;
-import burp.api.montoya.http.message.responses.HttpResponse;
-import org.apache.commons.lang3.NotImplementedException;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -126,12 +123,18 @@ abstract class Scan implements IScannerCheck {
     static void report(String title, String detail, byte[] baseBytes, HttpRequestResponse... requests) {
         ArrayList<Resp> responses = new ArrayList<>();
         for (HttpRequestResponse req: requests) {
-            responses.add(new Resp(req));
+            if (req != null) {
+                responses.add(new Resp(req));
+            }
         }
 
+//        String url = "https://"+Utilities.getHeader(baseBytes, "Host")+Utilities.getPathFromRequest(baseBytes);
+//        AuditIssue issue = AuditIssue.auditIssue(title, detail, "", url, AuditIssueSeverity.HIGH, AuditIssueConfidence.TENTATIVE, "", "", AuditIssueSeverity.HIGH, requests);
+//        Utilities.montoyaApi.siteMap().add(issue);
+
+        // todo report everything this way
         report(title, detail, baseBytes, responses.toArray(new Resp[0]));
     }
-
 
     static void report(String title, String detail, byte[] baseBytes, Resp... requests) {
         recordFinding();
@@ -201,7 +204,7 @@ abstract class Scan implements IScannerCheck {
     static void reportToOrganiser(String title, IHttpService service, String detail, List<IHttpRequestResponse> reqsToReport) {
         for (IHttpRequestResponse req : reqsToReport) {
             HttpRequestResponse montoyaReq = Utilities.buildMontoyaResp(new Resp(req));
-            montoyaReq.annotations().setNotes(title +"\n\n"+detail);
+            montoyaReq.annotations().setNotes("ext-reported: "+title +"\n\n"+detail);
             BulkUtilities.montoyaApi.organizer().sendToOrganizer(montoyaReq);
             break;
         }
@@ -219,17 +222,18 @@ abstract class Scan implements IScannerCheck {
         return request(service, req, maxRetries, forceHTTP1, null);
     }
 
-    static HttpRequestResponse request(HttpRequest req, boolean forceHTTP1) {
+    static MontoyaRequestResponse request(HttpRequest req, boolean forceHTTP1) {
         if (BulkUtilities.unloaded.get()) {
             throw new RuntimeException("Aborting due to extension unload");
         }
+        throttle();
 
         HttpMode mode = HttpMode.AUTO;
         if (forceHTTP1) {
             mode = HttpMode.HTTP_1;
         }
 
-        return Utilities.montoyaApi.http().sendRequest(req, mode);
+        return new MontoyaRequestResponse(Utilities.montoyaApi.http().sendRequest(req, mode));
     }
 
 //    static Resp turboRequest(IHttpService service, byte[] req) {
