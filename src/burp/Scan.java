@@ -208,16 +208,13 @@ abstract class Scan implements IScannerCheck {
             HttpRequestResponse montoyaReq = Utilities.buildMontoyaResp(new Resp(req));
             montoyaReq.annotations().setNotes("ext-reported: "+title +"\n\n"+detail);
             BulkUtilities.montoyaApi.organizer().sendToOrganizer(montoyaReq);
-            break;
         }
     }
 
     static void reportToOrganiser(String notes, HttpRequestResponse... requests) {
         for (HttpRequestResponse req : requests) {
-            HttpRequestResponse montoyaReq = Utilities.buildMontoyaResp(new Resp(req));
-            montoyaReq.annotations().setNotes(notes);
-            BulkUtilities.montoyaApi.organizer().sendToOrganizer(montoyaReq);
-            break;
+            req.annotations().setNotes(notes);
+            BulkUtilities.montoyaApi.organizer().sendToOrganizer(req);
         }
     }
 
