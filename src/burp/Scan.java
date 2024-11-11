@@ -120,6 +120,8 @@ abstract class Scan implements IScannerCheck {
     }
 
 
+
+
     static void report(String title, String detail, byte[] baseBytes, HttpRequestResponse... requests) {
         ArrayList<Resp> responses = new ArrayList<>();
         for (HttpRequestResponse req: requests) {
@@ -205,6 +207,15 @@ abstract class Scan implements IScannerCheck {
         for (IHttpRequestResponse req : reqsToReport) {
             HttpRequestResponse montoyaReq = Utilities.buildMontoyaResp(new Resp(req));
             montoyaReq.annotations().setNotes("ext-reported: "+title +"\n\n"+detail);
+            BulkUtilities.montoyaApi.organizer().sendToOrganizer(montoyaReq);
+            break;
+        }
+    }
+
+    static void reportToOrganiser(String notes, HttpRequestResponse... requests) {
+        for (HttpRequestResponse req : requests) {
+            HttpRequestResponse montoyaReq = Utilities.buildMontoyaResp(new Resp(req));
+            montoyaReq.annotations().setNotes(notes);
             BulkUtilities.montoyaApi.organizer().sendToOrganizer(montoyaReq);
             break;
         }
