@@ -67,6 +67,7 @@ abstract class Scan implements IScannerCheck {
         return true;
     }
 
+    // note return value is ignored
     List<IScanIssue> doScan(byte[] baseReq, IHttpService service) {
         throw new RuntimeException("doScan(byte[] baseReq, IHttpService service) invoked but not implemented on class "+this.name);
     }
@@ -241,7 +242,12 @@ abstract class Scan implements IScannerCheck {
             mode = HttpMode.HTTP_1;
         }
 
-        return new MontoyaRequestResponse(Utilities.montoyaApi.http().sendRequest(req, mode));
+        long startTime = System.currentTimeMillis();
+        HttpRequestResponse response = Utilities.montoyaApi.http().sendRequest(req, mode);
+        long duration = System.currentTimeMillis() - startTime;
+        MontoyaRequestResponse output = new MontoyaRequestResponse(response);
+        output.setElapsedTime(duration);
+        return output;
     }
 
 //    static Resp turboRequest(IHttpService service, byte[] req) {
