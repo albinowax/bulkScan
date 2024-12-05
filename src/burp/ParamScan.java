@@ -21,7 +21,10 @@ abstract class ParamScan extends Scan {
         scanSettings.register("params: scheme-path", false, "When doing a parameter-based scan over HTTP/2, create a fake path in the :scheme header and scan it");
     }
 
-    abstract List<IScanIssue> doScan(IHttpRequestResponse baseRequestResponse, IScannerInsertionPoint insertionPoint);
+    List<IScanIssue> doScan(IHttpRequestResponse baseRequestResponse, IScannerInsertionPoint insertionPoint) {
+        reportAllIssues(doActiveScan(baseRequestResponse, insertionPoint));
+        return null;
+    }
 
     List<IScanIssue> doScan(byte[] baseReq, IHttpService service) {
         return null;

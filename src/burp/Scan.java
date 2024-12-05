@@ -76,6 +76,14 @@ abstract class Scan implements IScannerCheck {
         return doScan(baseRequestResponse.getRequest(), baseRequestResponse.getHttpService());
     }
 
+    void reportAllIssues(List<IScanIssue> issues) {
+        if (issues != null) {
+            for (IScanIssue issue : issues) {
+                Utilities.callbacks.addScanIssue(issue);
+            }
+        }
+    }
+
     boolean shouldScan(IHttpRequestResponse baseRequestResponse) {
         if (BulkUtilities.globalSettings.getBoolean("skip vulnerable hosts") && BulkScan.hostsToSkip.containsKey(baseRequestResponse.getHttpService().getHost())) {
             return false;
@@ -83,8 +91,14 @@ abstract class Scan implements IScannerCheck {
         return true;
     }
 
+    List<IScanIssue> doScan(IHttpRequestResponse baseRequestResponse, IScannerInsertionPoint insertionPoint) {
+        reportAllIssues(doActiveScan(baseRequestResponse, insertionPoint));
+        return null;
+    }
+
     @Override
     public List<IScanIssue> doActiveScan(IHttpRequestResponse baseRequestResponse, IScannerInsertionPoint insertionPoint) {
+        //throw new RuntimeException("doActiveScan invoked but not implemented on class "+this.name);
         return doScan(baseRequestResponse.getRequest(), baseRequestResponse.getHttpService());
     }
 
@@ -99,6 +113,9 @@ abstract class Scan implements IScannerCheck {
 
     @Override
     public int consolidateDuplicateIssues(IScanIssue existingIssue, IScanIssue newIssue) {
+        if (existingIssue.getIssueName().equals(newIssue.getIssueName())) {
+            return -1;
+        }
         return 0;
     }
 
