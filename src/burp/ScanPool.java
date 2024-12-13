@@ -20,4 +20,5 @@ class ScanPool extends ThreadPoolExecutor implements IExtensionStateListener {
         getQueue().clear();
         shutdown();
     }
+
 }
