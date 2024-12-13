@@ -18,10 +18,10 @@ class BulkScanItem implements Runnable {
         try {
             if (scanner.shouldScan(baseReq)) {
                 if (baseItem.insertionPoint != null) {
-                    scanner.doActiveScan(baseReq, baseItem.insertionPoint);
+                    Scan.reportAllIssues(scanner.doActiveScan(baseReq, baseItem.insertionPoint));
                 }
                 else {
-                    scanner.doScan(baseReq);
+                    Scan.reportAllIssues(scanner.doScan(baseReq));
                 }
             } else {
                 BulkUtilities.out("Skipping already-confirmed-vulnerable host: " + baseItem.host);
@@ -29,7 +29,14 @@ class BulkScanItem implements Runnable {
             ScanPool engine = BulkScanLauncher.getTaskEngine();
             long done = engine.getCompletedTaskCount() + 1;
 
-            BulkUtilities.out("Completed request with key " + baseItem.getKey() + ": " + done + " of " + (engine.getQueue().size() + done) + " in " + (System.currentTimeMillis() - start) / 1000 + " seconds with " + BulkUtilities.requestCount.get() + " requests," + engine.candidates.get() + " candidates and " + engine.findings.get() + " findings ");
+            if (engine.getQueue().size() < 1000 || done % 100 == 0) {
+                BulkUtilities.out("Completed request with key " + baseItem.getKey() + ": " + done + " of " + (engine.getQueue().size() + done) + " in " + (System.currentTimeMillis() - start) / 1000 + " seconds with " + BulkUtilities.requestCount.get() + " requests," + engine.candidates.get() + " candidates and " + engine.findings.get() + " findings ");
+            }
+
+            if (Utilities.globalSettings.getBoolean("infinite scan")) {
+                Utilities.out("Re-queuing completed task for infinite scan");
+                engine.execute(this);
+            }
         } catch (Exception e) {
             BulkUtilities.showError(e);
         }

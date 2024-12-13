@@ -1,6 +1,7 @@
 package burp;
 
 import burp.api.montoya.http.HttpMode;
+import burp.api.montoya.http.RequestOptions;
 import burp.api.montoya.http.message.HttpRequestResponse;
 import burp.api.montoya.http.message.requests.HttpRequest;
 import java.util.ArrayList;
@@ -21,6 +22,7 @@ abstract class Scan implements IScannerCheck {
         // any-scan settings
         scanSettings.register("per-thread throttle", 0, "Pause for X ms before sending each request");
         scanSettings.register("thread pool size", 8, "The maximum number of threads created for attacks. This roughly equates to the number of concurrent HTTP requests. Increase this number to make large scale attacks go faster, or decrease it to reduce your system load.");
+        scanSettings.register("infinite scan", false, "Repeat all scan items forever until the extension is unloaded");
         scanSettings.register("use key", true, "Avoid scanning similar endpoints by generating a key from each request's hostname and protocol, and skipping subsequent requests with matching keys.");
         scanSettings.register("key method", true, "Include the request method in the key");
         scanSettings.register("key path", false, "Include the request path in the key");
@@ -76,7 +78,7 @@ abstract class Scan implements IScannerCheck {
         return doScan(baseRequestResponse.getRequest(), baseRequestResponse.getHttpService());
     }
 
-    void reportAllIssues(List<IScanIssue> issues) {
+    static void reportAllIssues(List<IScanIssue> issues) {
         if (issues != null) {
             for (IScanIssue issue : issues) {
                 Utilities.callbacks.addScanIssue(issue);
@@ -249,6 +251,10 @@ abstract class Scan implements IScannerCheck {
     }
 
     static MontoyaRequestResponse request(HttpRequest req, boolean forceHTTP1) {
+        return request(req, forceHTTP1, false);
+    }
+
+    static MontoyaRequestResponse request(HttpRequest req, boolean forceHTTP1, boolean alignSNI) {
         if (BulkUtilities.unloaded.get()) {
             throw new RuntimeException("Aborting due to extension unload");
         }
@@ -259,8 +265,14 @@ abstract class Scan implements IScannerCheck {
             mode = HttpMode.HTTP_1;
         }
 
+        RequestOptions options = RequestOptions.requestOptions().withHttpMode(mode);//.withResponseTimeout(121000);
+
+        if (alignSNI) {
+            //options = options.withServerNameIndicator(req.headerValue("Host"));
+        }
+
         long startTime = System.currentTimeMillis();
-        HttpRequestResponse response = Utilities.montoyaApi.http().sendRequest(req, mode);
+        HttpRequestResponse response = Utilities.montoyaApi.http().sendRequest(req, options);
         long duration = System.currentTimeMillis() - startTime;
         MontoyaRequestResponse output = new MontoyaRequestResponse(response);
         output.setElapsedTime(duration);

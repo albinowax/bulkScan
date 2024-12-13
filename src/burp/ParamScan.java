@@ -35,7 +35,12 @@ abstract class ParamScan extends Scan {
         return doScan(baseRequestResponse, insertionPoint);
     }
 
-    @Override
+    public List<IScanIssue> dualActiveScan(IHttpRequestResponse baseRequestResponse, IScannerInsertionPoint insertionPoint) {
+        throw new RuntimeException("Not implemented");
+    }
+
+
+        @Override
     boolean supportsRequestScan() {
         return false;
     }
