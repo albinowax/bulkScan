@@ -1,5 +1,6 @@
 package burp;
 
+import burp.api.montoya.core.ToolType;
 import burp.api.montoya.http.HttpService;
 import burp.api.montoya.http.handler.*;
 import burp.api.montoya.http.message.HttpRequestResponse;
@@ -34,6 +35,10 @@ public class LiveScan implements HttpHandler {
 
     private void scan(HttpResponseReceived response) {
         if (!Utilities.globalSettings.getBoolean("live scan")) {
+            return;
+        }
+
+        if (!response.toolSource().isFromTool(ToolType.PROXY) && !response.toolSource().isFromTool(ToolType.REPEATER)) {
             return;
         }
 
