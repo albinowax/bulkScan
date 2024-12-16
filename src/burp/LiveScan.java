@@ -48,6 +48,7 @@ public class LiveScan implements HttpHandler {
 
         if (Scan.getLastScan() == null) {
             Utilities.out("Not initiating a live scan - configure & launch a manual scan first");
+            return;
         }
 
         HttpService service = response.initiatingRequest().httpService();
