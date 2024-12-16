@@ -62,6 +62,7 @@ class BulkScan implements Runnable  {
     public void run() {
         try {
             long start = System.currentTimeMillis();
+            Scan.setLastScan(scan);
             ScanPool taskEngine = BulkScanLauncher.getTaskEngine();
 
             int queueSize = taskEngine.getQueue().size();
@@ -100,13 +101,6 @@ class BulkScan implements Runnable  {
             int i = 0;
             int queued = 0;
             int totalRequests = reqlist.size();
-            String filter = BulkUtilities.globalSettings.getString("filter");
-            String respFilter = BulkUtilities.globalSettings.getString("resp-filter");
-            boolean applyRespFilter = !"".equals(respFilter);
-            boolean applyFilter = !"".equals(filter);
-            String mimeFilter = BulkUtilities.globalSettings.getString("mimetype-filter");
-            boolean applyMimeFilter = !"".equals(mimeFilter);
-            boolean applySchemeFilter = config.getBoolean("filter HTTP");
 
             // every pass adds at least one item from every host
             while (!reqlist.isEmpty()) {
@@ -119,43 +113,9 @@ class BulkScan implements Runnable  {
 
                     ScanItem req = left.next();
 
-                    if (applySchemeFilter && "http".equals(req.req.getHttpService().getProtocol())) {
+                    if (shouldFilter(req)) {
                         left.remove();
                         continue;
-                    }
-
-//                    if (BulkUtilities.globalSettings.getBoolean("skip flagged hosts") && domainAlreadyFlagged(req.req.getHttpService())) {
-//                        continue;
-//                    }
-
-                    if (applyFilter && !BulkUtilities.containsBytes(req.req.getRequest(), filter.getBytes())) {
-                        left.remove();
-                        continue;
-                    }
-
-                    if (applyMimeFilter) {
-                        byte[] resp = req.req.getResponse();
-                        if (resp == null) {
-                            if (!BulkUtilities.getHeader(req.req.getRequest(), "Accept").toLowerCase().contains(mimeFilter)) {
-                                left.remove();
-                                continue;
-                            }
-                        } else {
-                            if (!BulkUtilities.getHeader(req.req.getResponse(), "Content-Type").toLowerCase().contains(mimeFilter)) {
-                                left.remove();
-                                continue;
-                            }
-                        }
-                    }
-
-                    // fixme doesn't actually work - maybe the resp is always null?
-                    if (applyRespFilter) {
-                        byte[] resp = req.req.getResponse();
-                        if (resp == null || !BulkUtilities.containsBytes(resp, respFilter.getBytes())) {
-                            BulkUtilities.log("Skipping request due to response filter");
-                            left.remove();
-                            continue;
-                        }
                     }
 
                     String host = req.host;
@@ -163,7 +123,6 @@ class BulkScan implements Runnable  {
                         remainingHosts.add(host);
                         continue;
                     }
-
 
                     if (scan instanceof ParamScan && !req.prepared()) {
                         ArrayList<ScanItem> newItems = req.prepare(useMinedHeader);
@@ -213,6 +172,43 @@ class BulkScan implements Runnable  {
             BulkUtilities.out("Queue aborted due to exception");
             BulkUtilities.showError(e);
         }
+    }
+
+    static boolean shouldFilter(ScanItem req) {
+        if (req.getConfig().getBoolean("filter HTTP") && "http".equals(req.req.getHttpService().getProtocol())) {
+            return true;
+        }
+
+        String filter = BulkUtilities.globalSettings.getString("filter");
+        if (!filter.equals("") && !BulkUtilities.containsBytes(req.req.getRequest(), filter.getBytes())) {
+            return true;
+        }
+
+        String mimeFilter = BulkUtilities.globalSettings.getString("mimetype-filter");
+        if (!"".equals(mimeFilter)) {
+            byte[] resp = req.req.getResponse();
+            if (resp == null) {
+                if (!BulkUtilities.getHeader(req.req.getRequest(), "Accept").toLowerCase().contains(mimeFilter)) {
+                    return true;
+                }
+            } else {
+                if (!BulkUtilities.getHeader(req.req.getResponse(), "Content-Type").toLowerCase().contains(mimeFilter)) {
+                    return true;
+                }
+            }
+        }
+
+        // fixme doesn't actually work - maybe the resp is always null?
+        String respFilter = BulkUtilities.globalSettings.getString("resp-filter");
+        if (!"".equals(respFilter)) {
+            byte[] resp = req.req.getResponse();
+            if (resp == null || !BulkUtilities.containsBytes(resp, respFilter.getBytes())) {
+                BulkUtilities.log("Skipping request due to response filter");
+                return true;
+            }
+        }
+
+        return false;
     }
 }
 

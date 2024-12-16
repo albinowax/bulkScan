@@ -11,6 +11,8 @@ import java.util.List;
 abstract class Scan implements IScannerCheck {
     static ZgrabLoader loader = null;
 
+    public static Scan lastScan = null;
+
     String name = "";
     SettingsBox scanSettings;
 
@@ -23,6 +25,7 @@ abstract class Scan implements IScannerCheck {
         scanSettings.register("per-thread throttle", 0, "Pause for X ms before sending each request");
         scanSettings.register("thread pool size", 8, "The maximum number of threads created for attacks. This roughly equates to the number of concurrent HTTP requests. Increase this number to make large scale attacks go faster, or decrease it to reduce your system load.");
         scanSettings.register("infinite scan", false, "Repeat all scan items forever until the extension is unloaded");
+        scanSettings.register("live scan", false, "Auto-scan all in-scope proxied traffic in real time");
         scanSettings.register("use key", true, "Avoid scanning similar endpoints by generating a key from each request's hostname and protocol, and skipping subsequent requests with matching keys.");
         scanSettings.register("key method", true, "Include the request method in the key");
         scanSettings.register("key path", false, "Include the request path in the key");
@@ -349,5 +352,13 @@ abstract class Scan implements IScannerCheck {
         }
 
         return new Resp(iRequestResponse, startTime, endTime);
+    }
+
+    public static Scan getLastScan() {
+        return lastScan;
+    }
+
+    public static void setLastScan(Scan lastScan) {
+        Scan.lastScan = lastScan;
     }
 }

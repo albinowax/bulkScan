@@ -4,9 +4,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 class ScanItem {
-    private Scan scan;
+    Scan scan;
     IHttpRequestResponse req;
     String host;
+
+    public ConfigurableSettings getConfig() {
+        return config;
+    }
+
     private ConfigurableSettings config;
     private boolean prepared = false;
     IScannerInsertionPoint insertionPoint;
