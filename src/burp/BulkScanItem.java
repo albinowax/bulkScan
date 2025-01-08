@@ -1,5 +1,7 @@
 package burp;
 
+import java.net.UnknownHostException;
+
 class BulkScanItem implements Runnable {
 
     private final ScanItem baseItem;
@@ -37,8 +39,10 @@ class BulkScanItem implements Runnable {
                 Utilities.out("Re-queuing completed task for infinite scan");
                 engine.execute(this);
             }
-        } catch (Exception e) {
-            BulkUtilities.showError(e);
+        } catch (Throwable e) {
+            if (!e.getMessage().contains("java.net.UnknownHostException")) {
+                BulkUtilities.showError(e);
+            }
         }
     }
 }

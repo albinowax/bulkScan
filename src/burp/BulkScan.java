@@ -88,8 +88,10 @@ class BulkScan implements Runnable  {
                 reqlist.add(new ScanItem(req, config, scan));
             }
 
+
             Collections.shuffle(reqlist);
             Collections.sort(reqlist, new SortByParentDomain());
+
 
             int cache_size = queueSize; //thread_count;
 
