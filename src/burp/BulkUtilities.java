@@ -212,7 +212,15 @@ public class BulkUtilities extends Utilities {
     }
 
     static IScanIssue reportReflectionIssue(Attack[] attacks, IHttpRequestResponse baseRequestResponse, String title, String detail) {
-        IHttpRequestResponse[] requests = new IHttpRequestResponse[attacks.length];
+        IHttpRequestResponse[] httpRequests = null;
+        WebSocketMessageImpl[] wsRequests = null;
+
+        if (attacks[0].getFastestRequest() instanceof Resp) {
+            httpRequests = new IHttpRequestResponse[attacks.length];
+        } else if (attacks[0].getFastestRequest() instanceof WebSocketMessageImpl) {
+            wsRequests = new WebSocketMessageImpl[attacks.length];
+        }
+
         Probe bestProbe = null;
         boolean reliable = false;
         detail = detail + "<br/><br/><b>Successful probes</b><br/>";
@@ -220,7 +228,15 @@ public class BulkUtilities extends Utilities {
         int evidenceCount = 0;
 
         for (int i=0; i<attacks.length; i++) {
-            requests[i] = attacks[i].getFastestRequest(); // was getFirstRequest
+            //requests[i] = attacks[i].getFastestRequest(); // was getFirstRequest
+            Object fastestRequest = attacks[i].getFastestRequest();
+
+        if (fastestRequest instanceof Resp && httpRequests != null) {
+            httpRequests[i] = (IHttpRequestResponse) fastestRequest;
+        } else if (fastestRequest instanceof WebSocketMessageImpl && wsRequests != null) {
+            wsRequests[i] = (WebSocketMessageImpl) fastestRequest;
+        }
+
             if (i % 2 == 0) {
                 detail += " &#160;  &#160; <table><tr><td><b>"+StringEscapeUtils.escapeHtml4(attacks[i].getProbe().getName())+" &#160;  &#160; </b></td><td><b>"+ StringEscapeUtils.escapeHtml4(attacks[i].payload)+ " &#160; </b></td><td><b>";
             }
@@ -239,7 +255,11 @@ public class BulkUtilities extends Utilities {
                     Object brokeResult = breakPrint.get(mark);
                     Object workedResult = workedPrint.get(mark);
 
-                    if(brokeResult.equals(workedResult)) {
+                    // handle null or invalid values
+                    if (brokeResult == null) brokeResult = 0;
+                    if (workedResult == null) workedResult = 0;
+
+                    if (brokeResult.equals(workedResult)) {
                         continue;
                     }
 
@@ -301,7 +321,16 @@ public class BulkUtilities extends Utilities {
             title = bestProbe.getName();
         }
 
-        return new Fuzzable(requests, baseRequestResponse, title, detail, reliable, reportedSeverity); //attacks[attacks.length-2].getProbe().getName()
+        Object fastestRequest = attacks[0].getFastestRequest();
+        Fuzzable issue = null;
+
+        if (fastestRequest instanceof Resp && httpRequests != null) {
+            issue = new Fuzzable(httpRequests, baseRequestResponse, title, detail, reliable, reportedSeverity);
+        } else if (fastestRequest instanceof WebSocketMessageImpl && wsRequests != null) {
+            issue = new Fuzzable(wsRequests, baseRequestResponse, title, detail, reliable, reportedSeverity);
+            Utilities.callbacks.addScanIssue(issue);
+        }
+        return issue;
     }
 
     static List<IParameter> getHeaderInsertionPoints(byte[] request, String[] to_poison) {
@@ -354,14 +383,13 @@ public class BulkUtilities extends Utilities {
 
 }
 
-
 class Fuzzable extends CustomScanIssue {
 
     private final static String REMEDIATION = "This issue does not necessarily indicate a vulnerability; it is merely highlighting behaviour worthy of manual investigation. Try to determine the root cause of the observed behaviour." +
             "Refer to <a href='http://blog.portswigger.net/2016/11/backslash-powered-scanning-hunting.html'>Backslash Powered Scanning</a> for further details and guidance interpreting results. ";
 
-    Fuzzable(IHttpRequestResponse[] requests, IHttpRequestResponse baseRequestResponse, String title, String detail, boolean reliable, String severity) {
-        super(requests[0].getHttpService(), BulkUtilities.analyzeRequest(baseRequestResponse).getUrl(), ArrayUtils.add(requests, 0, baseRequestResponse), title, detail, severity, calculateConfidence(reliable), REMEDIATION);
+    Fuzzable(Object[] requests, IHttpRequestResponse baseRequestResponse, String title, String detail, boolean reliable, String severity) {
+        super(baseRequestResponse.getHttpService(), BulkUtilities.analyzeRequest(baseRequestResponse).getUrl(), new IHttpRequestResponse[]{baseRequestResponse}, title, detail, severity, calculateConfidence(reliable), REMEDIATION);
     }
 
     private static String calculateConfidence(boolean reliable) {

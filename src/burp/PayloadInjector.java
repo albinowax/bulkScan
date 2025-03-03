@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 
+import burp.api.montoya.core.ByteArray;
+
 
 class PayloadInjector {
 
@@ -20,16 +22,22 @@ class PayloadInjector {
 
     private IScannerInsertionPoint insertionPoint;
 
-    public IHttpRequestResponse getBase() {
+    public Object getBase() {
         return base;
     }
 
-    private IHttpRequestResponse base;
+    private Object base;
 
     PayloadInjector(IHttpRequestResponse baseRequestResponse, IScannerInsertionPoint insertionPoint) {
         this.service = baseRequestResponse.getHttpService();
         this.base = baseRequestResponse;
         this.insertionPoint = insertionPoint;
+    }
+
+    PayloadInjector(WebSocketMessageImpl base) {
+        this.base = base;
+        this.service = null;
+        this.insertionPoint = null;
     }
 
     ArrayList<Attack> fuzz(Attack baselineAttack, Probe probe) {
@@ -144,29 +152,59 @@ class PayloadInjector {
         //    payload = payload.replace("z", BulkUtilities.generateCanary());
         //}
 
-        String base_payload = payload;
-        if (prefix == Probe.PREPEND) {
-            payload += insertionPoint.getBaseValue();
-        }
-        else if (prefix == Probe.APPEND) {
-            payload = insertionPoint.getBaseValue() + anchor + payload;
-        }
-        else if (prefix == Probe.REPLACE) {
-            // payload = payload;
-        }
-        else {
-            BulkUtilities.err("Unknown payload position");
-        }
+        if (this.base instanceof IHttpRequestResponse) {
+            String base_payload = payload;
+            if (prefix == Probe.PREPEND) {
+                payload += insertionPoint.getBaseValue();
+            }
+            else if (prefix == Probe.APPEND) {
+                payload = insertionPoint.getBaseValue() + anchor + payload;
+            }
+            else if (prefix == Probe.REPLACE) {
+                // payload = payload;
+            }
+            else {
+                BulkUtilities.err("Unknown payload position");
+            }
+            boolean needCacheBuster = probe.useCacheBuster() || insertionPoint.getInsertionPointType() == IScannerInsertionPoint.INS_PARAM_COOKIE || insertionPoint.getInsertionPointType() == IScannerInsertionPoint.INS_HEADER || insertionPoint.getInsertionPointType() == IScannerInsertionPoint.INS_EXTENSION_PROVIDED;
 
-        boolean needCacheBuster = probe.useCacheBuster() || insertionPoint.getInsertionPointType() == IScannerInsertionPoint.INS_PARAM_COOKIE || insertionPoint.getInsertionPointType() == IScannerInsertionPoint.INS_HEADER || insertionPoint.getInsertionPointType() == IScannerInsertionPoint.INS_EXTENSION_PROVIDED;
+            Resp req = buildRequest(payload, needCacheBuster, mutation);
+            if(randomAnchor) {
+                req.setHighlight(anchor);
+                //req = BulkUtilities.highlightRequestResponse(req, anchor, anchor, insertionPoint);
+            }
+   
+            return new Attack(req, probe, base_payload, anchor);
+        } else if (this.base instanceof WebSocketMessageImpl) {
+            String base_payload = payload;
+            WebSocketMessageImpl baseCast = (WebSocketMessageImpl) base;
+            String base_message = baseCast.payload().toString();
+            int startI = base_message.indexOf("FU");
+            int endI = base_message.indexOf("ZZ");
+            String baseValue = base_message.substring(startI + 2, endI);
+        
+            // i did implement this using regex first, however somehow it broke the fuzzing
+            // this logic might appear slight different from the original, but it does the same
+            // but since i couldn't call or write a buldRequest method, this does something similar
+            if (prefix == Probe.PREPEND) {
+                payload = base_message.substring(0, startI + 2) + payload + baseValue + base_message.substring(endI);
+            }
+            else if (prefix == Probe.APPEND) {
+                payload = base_message.substring(0, startI + 2) + baseValue + anchor + payload + base_message.substring(endI);
+            }
+            else if (prefix == Probe.REPLACE) {
+                // payload = payload;
+            } else {
+                BulkUtilities.err("Unknown payload position");
+            }
+        
+            // no need for cache buster
+            WebSocketMessageImpl req = new WebSocketMessageImpl(ByteArray.byteArray(payload), baseCast.direction(), baseCast.upgradeRequest(), baseCast.annotations(), BulkUtilities.globalSettings.getInt("ws: timeout"));
 
-        Resp req = buildRequest(payload, needCacheBuster, mutation);
-        if(randomAnchor) {
-            req.setHighlight(anchor);
-            //req = BulkUtilities.highlightRequestResponse(req, anchor, anchor, insertionPoint);
+            return new Attack(req, probe, base_payload, anchor);
+        } else {
+            throw new IllegalArgumentException("Unsupported base type: " + this.base.getClass().getName());
         }
-
-        return new Attack(req, probe, base_payload, anchor);
     }
 
     Resp buildRequest(String payload, boolean needCacheBuster) {
@@ -230,12 +268,39 @@ class PayloadInjector {
 
     Attack buildAttack(String payload, boolean random) {
         String canary = "";
-        if (random) {
+
+        if (this.base instanceof IHttpRequestResponse) {
+            if (random) {
             canary = BulkUtilities.generateCanary();
+            }
+
+            return new Attack(buildRequest(canary+payload, !random), null, null, canary);
+        } else if (this.base instanceof WebSocketMessageImpl) {
+            ByteArray fPayload;
+
+            WebSocketMessageImpl baseCast = (WebSocketMessageImpl) base;
+            String baseMessageString = baseCast.payload().toString();
+            int startI = baseMessageString.indexOf("FU");
+            int endI = baseMessageString.indexOf("ZZ");
+
+            String modifiedMessage;
+
+            if (random) {
+                canary = BulkUtilities.generateCanary();
+
+                modifiedMessage = baseMessageString.substring(0, startI) + canary + payload + baseMessageString.substring(endI + 2);
+                fPayload = ByteArray.byteArray(modifiedMessage);
+            } else {
+                modifiedMessage = baseMessageString.substring(0, startI) + payload + baseMessageString.substring(endI + 2);
+                fPayload = ByteArray.byteArray(modifiedMessage);
+            }
+
+            WebSocketMessageImpl request = new WebSocketMessageImpl(fPayload, baseCast.direction(), baseCast.upgradeRequest(), baseCast.annotations(), BulkUtilities.globalSettings.getInt("ws: timeout"));
+
+            return new Attack(request);
+        } else {
+            throw new IllegalArgumentException("Unsupported base type: " + this.base.getClass().getName());
         }
-
-        return new Attack(buildRequest(canary+payload, !random), null, null, canary);
-
     }
 
 }

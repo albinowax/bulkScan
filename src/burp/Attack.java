@@ -2,6 +2,8 @@ package burp;
 
 import java.util.*;
 
+import burp.api.montoya.core.ByteArray;
+
 /**
  * Created by james on 24/11/2016.
  */
@@ -9,22 +11,22 @@ class Attack {
     final static int UNINITIALISED = -1;
     final static int DYNAMIC = -2;
     final static int INCALCULABLE = -3;
+    
+    private Object firstRequest;
 
-    private Resp firstRequest;
-
-    private Resp fastestRequest;
-
+    private Object fastestRequest;
+    
     HashMap<String, Object> getLastPrint() {
         return lastPrint;
     }
 
     private HashMap<String, Object> lastPrint;
 
-    Resp getFastestRequest() {
+    Object getFastestRequest() {
         return fastestRequest;
     }
 
-    private Resp lastRequest;
+    private Object lastRequest;
 
     private String[] keys = new String[]{BulkUtilities.globalSettings.getString("canary"), "\",\"", "true", "false", "\"\"", "[]", "</html>", "error", "exception", "invalid", "warning", "stack", "sql syntax", "divisor", "divide", "ora-", "division", "infinity", "<script", "<div"};
 
@@ -36,12 +38,18 @@ class Attack {
     private HashMap<String, Object> fingerprint;
 
     private IResponseKeywords responseKeywords = BulkUtilities.helpers.analyzeResponseKeywords(Arrays.asList(keys));
-    private IResponseVariations responseDetails = new FastResponseVariations();//BulkUtilities.helpers.analyzeResponseVariations();
+    private FastResponseVariations responseDetails;
 
     // todo add response end?
     private int responseReflections = UNINITIALISED;
 
-    public Attack(Resp req, Probe probe, String payload, String anchor) {
+    public Attack(Object req, Probe probe, String payload, String anchor) {
+        if (req instanceof Resp) {
+            this.responseDetails = new FastResponseVariations();
+        } else if (req instanceof WebSocketMessageImpl) {
+            this.responseDetails = new FastResponseVariations("ws");
+        }
+
         this.firstRequest = req;
         this.lastRequest = req;
         this.fastestRequest = req;
@@ -54,7 +62,13 @@ class Attack {
 
     }
 
-    public Attack(Resp req) {
+    public Attack(Object req) {
+        if (req instanceof Resp) {
+            this.responseDetails = new FastResponseVariations();
+        } else if (req instanceof WebSocketMessageImpl) {
+            this.responseDetails = new FastResponseVariations("ws");
+        }
+
         this.firstRequest = req;
         this.lastRequest = req;
         this.fastestRequest = req;
@@ -82,7 +96,7 @@ class Attack {
         return fingerprint;
     }
 
-    public Resp getFirstRequest() {
+    public Object getFirstRequest() {
         return firstRequest;
     }
 
@@ -116,10 +130,18 @@ class Attack {
 
         fingerprint = generatedPrint;
     }
-
-    private void updateFastestRequest(Resp resp) {
-        if (resp.getResponseTime() < fastestRequest.getResponseTime()) {
-            fastestRequest = resp;
+    
+    private void updateFastestRequest(Object resp) {
+        if (resp instanceof Resp) {
+            Resp respCast = (Resp) resp;
+            if (respCast.getResponseTime() < ((Resp) fastestRequest).getResponseTime()) {
+                fastestRequest = respCast;
+            }
+        } else if (resp instanceof WebSocketMessageImpl) {
+            WebSocketMessageImpl respCast = (WebSocketMessageImpl) resp;
+            if (respCast.responseTime() < ((WebSocketMessageImpl) fastestRequest).responseTime()) {
+                fastestRequest = respCast;
+            }
         }
     }
 
@@ -127,23 +149,47 @@ class Attack {
         return probe;
     }
 
-    private Attack add(Resp resp, String anchor) {
+    private Attack add(Object resp, String anchor) {
         assert (firstRequest != null);
 
-
-        byte[] response = BulkUtilities.filterResponse(resp.getReq().getResponse());
-        responseKeywords.updateWith(response);
-        responseDetails.updateWith(response);
+        byte[] response = new byte[0];
+        if (resp instanceof Resp) {
+            Resp respCast = (Resp) resp;
+            response = BulkUtilities.filterResponse(respCast.getReq().getResponse());
+            responseKeywords.updateWith(response);
+            responseDetails.updateWith(response);
+        } else if (resp instanceof WebSocketMessageImpl) {
+            WebSocketMessageImpl respCast = (WebSocketMessageImpl) resp;
+            for (ByteArray responseByteArray : respCast.responses()) {
+                response = responseByteArray.getBytes();
+                responseKeywords.updateWith(response);
+            }
+            responseDetails.updateWith(respCast);
+        }
 
         for (QuantitativeMeasurements box: quantBoxes) {
-            box.updateWith(resp);
+            if (resp instanceof Resp) {
+                Resp respCast = (Resp) resp;
+                box.updateWith(respCast);
+            } else if (resp instanceof WebSocketMessageImpl) {
+                WebSocketMessageImpl respCast = (WebSocketMessageImpl) resp;
+                box.updateWith(respCast);
+            }
         }
 
         if(anchor == null || anchor.equals("")) {
             responseReflections = INCALCULABLE;
-        }
-        else {
-            int reflections = BulkUtilities.countMatches(response, anchor.getBytes());
+        } else {
+            int reflections = 0;
+            if (resp instanceof Resp) {
+                reflections = BulkUtilities.countMatches(response, anchor.getBytes());
+            } else if (resp instanceof WebSocketMessageImpl) {
+                WebSocketMessageImpl respCast = (WebSocketMessageImpl) resp;
+                for (ByteArray responseByteArray : respCast.responses()) {
+                    byte[] response2 = responseByteArray.getBytes();
+                    reflections += BulkUtilities.countMatches(response2, anchor.getBytes());
+                }
+            }
             if (responseReflections == UNINITIALISED) {
                 responseReflections = reflections;
             } else if (responseReflections != reflections && responseReflections != INCALCULABLE) {
@@ -164,6 +210,12 @@ class Attack {
             anchor = attack.anchor;
             probe = attack.getProbe();
             payload = attack.payload;
+
+            if (attack.firstRequest instanceof Resp) {
+                this.responseDetails = new FastResponseVariations();
+            } else if (attack.firstRequest instanceof WebSocketMessageImpl) {
+                this.responseDetails = new FastResponseVariations("ws");
+            }
             add(attack.getFirstRequest(), anchor);
             intialiseQuantitativeMeasurements(); // shouldn't this be before add()?
         }
