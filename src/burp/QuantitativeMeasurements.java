@@ -21,6 +21,12 @@ public class QuantitativeMeasurements {
         Collections.sort(measurements);
     }
 
+    // in this case it's easier to have 2 methods instead of using Object
+    void updateWith(WebSocketMessageImpl resp) {
+        measurements.add(resp.getAttribute(key));
+        Collections.sort(measurements);
+    }
+
     void merge(QuantitativeMeasurements newMeasurements) {
         measurements.addAll(newMeasurements.measurements);
         Collections.sort(measurements);
