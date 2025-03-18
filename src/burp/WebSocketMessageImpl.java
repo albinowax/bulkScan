@@ -166,6 +166,15 @@ public class WebSocketMessageImpl implements WebSocketMessage {
                     }
                 });
 
+                long init_wait = BulkUtilities.globalSettings.getInt("ws: timeout pre-payload");
+                if (init_wait > 0) {
+                    try {
+                        Thread.sleep(init_wait);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                }
+                
                 // messages to be sent before the payloads (e.g. auth)
                 String preMessage = Utilities.globalSettings.getString("ws: pre-message");
 
@@ -176,7 +185,7 @@ public class WebSocketMessageImpl implements WebSocketMessage {
                     }
                 }
 
-                extensionWebSocket.sendBinaryMessage(payload);
+                extensionWebSocket.sendTextMessage(payload.toString());
 
                 try {
                     Thread.sleep(timeout * 1000);
