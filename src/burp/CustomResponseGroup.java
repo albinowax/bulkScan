@@ -27,7 +27,7 @@ public class CustomResponseGroup {
         this.calculateFingerprint = calculateFingerprint;
     }
 
-    CustomResponseGroup add(HttpRequestResponse response) {
+    public CustomResponseGroup add(HttpRequestResponse response) {
         if (firstResp == null) {
             firstResp = new Resp(response);
         }
@@ -54,7 +54,7 @@ public class CustomResponseGroup {
         return this;
     }
 
-    boolean matches(HttpRequestResponse response) {
+    public boolean matches(HttpRequestResponse response) {
         HashMap<String, Object> inputPrint = calculateFingerprint.apply(response);
 
         for (String key: fingerprint.keySet()) {
@@ -65,11 +65,11 @@ public class CustomResponseGroup {
         return true;
     }
 
-    boolean badFingerprint() {
+    public boolean badFingerprint() {
         return fingerprint.isEmpty();
     }
 
-    ArrayList<String> diffKeys(HttpRequestResponse response) {
+    public ArrayList<String> diffKeys(HttpRequestResponse response) {
         ArrayList<String> diffKeys = new ArrayList<>();
         HashMap<String, Object> inputPrint = calculateFingerprint.apply(response);
         for (String key: fingerprint.keySet()) {
@@ -80,7 +80,7 @@ public class CustomResponseGroup {
         return diffKeys;
     }
 
-    String describeDiff(HttpRequestResponse response) {
+    public String describeDiff(HttpRequestResponse response) {
         HashMap<String, Object> inputPrint = calculateFingerprint.apply(response);
         StringBuilder diff = new StringBuilder();
         diff.append("attribute expected:attack<br>\n");

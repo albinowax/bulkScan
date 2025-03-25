@@ -258,11 +258,6 @@ abstract class Scan implements IScannerCheck {
     }
 
     static MontoyaRequestResponse request(HttpRequest req, boolean forceHTTP1, boolean alignSNI) {
-        if (BulkUtilities.unloaded.get()) {
-            throw new RuntimeException("Aborting due to extension unload");
-        }
-        throttle();
-
         HttpMode mode = HttpMode.AUTO;
         if (forceHTTP1) {
             mode = HttpMode.HTTP_1;
@@ -271,8 +266,16 @@ abstract class Scan implements IScannerCheck {
         RequestOptions options = RequestOptions.requestOptions().withHttpMode(mode);//.withResponseTimeout(121000);
 
         if (alignSNI) {
-            //options = options.withServerNameIndicator(req.headerValue("Host"));
+            options = options.withServerNameIndicator(req.headerValue("Host"));
         }
+        return request(req, options);
+    }
+
+    static MontoyaRequestResponse request(HttpRequest req, RequestOptions options) {
+        if (BulkUtilities.unloaded.get()) {
+            throw new RuntimeException("Aborting due to extension unload");
+        }
+        throttle();
 
         long startTime = System.currentTimeMillis();
         HttpRequestResponse response = Utilities.montoyaApi.http().sendRequest(req, options);
