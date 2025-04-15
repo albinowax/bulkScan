@@ -5,6 +5,13 @@ import java.util.*;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.ArrayUtils;
 
+import org.json.JSONObject;
+import org.json.JSONException;
+import org.json.JSONArray;
+
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
+
 class WsBulkUtilities {
     public static boolean verySimilar(WsAttack attack1, WsAttack attack2) {
         if (!attack1.getPrint().keySet().equals(attack2.getPrint().keySet())) {
@@ -175,7 +182,120 @@ class WsBulkUtilities {
         Utilities.callbacks.addScanIssue(issue);
         return issue;
     }
+    
+    public static List<String> getInsertionPoints(String message) {
+        List<String> insertionPoints = new ArrayList<>();
 
+        Pattern pattern = Pattern.compile("FU(.*)ZZ");
+        Matcher matcher = pattern.matcher(message);
+        if (matcher.find()) {
+            insertionPoints.add(message);
+        } else {
+            try {
+                if (message.matches("^\\d+\\[\"[^\"]+\",\\s*\\{.*}]$")) {
+                    int bracketStart = message.indexOf('[');
+                    int bracketEnd = message.lastIndexOf(']');
+                    if (bracketStart != -1 && bracketEnd != -1) {
+                        String content = message.substring(bracketStart + 1, bracketEnd);
+                        String[] parts = content.split(",", 2);
+                
+                        if (parts.length == 2) {
+                            // process event name
+                            String eventName = parts[0].trim();
+                            if (eventName.startsWith("\"") && eventName.endsWith("\"")) {
+                                eventName = eventName.substring(1, eventName.length() - 1);
+                            }
+                    
+                            // process json data
+                            String jsonData = parts[1].trim();
+                            JSONObject jsonObject = new JSONObject(jsonData);
+                    
+                            // Generate variations
+                            List<String> jsonVariations = new ArrayList<>();
+                            processJsonObject(jsonObject, jsonVariations);
+
+                            // For each JSON variation, create the corresponding Socket.IO message
+                            for (String jsonVar : jsonVariations) {
+                                String modified = message.substring(0, bracketStart + 1) + 
+                                        "\"" + eventName + "\"," + 
+                                        jsonVar + 
+                                        message.substring(bracketEnd);
+                                insertionPoints.add(modified);
+                            }
+                    
+                            // Also add variation where only the event name is modified
+                            String eventModified = message.substring(0, bracketStart + 1) + 
+                                          "\"FU" + eventName + "ZZ\"," + 
+                                          jsonData + 
+                                          message.substring(bracketEnd);
+                            insertionPoints.add(eventModified);
+                        }
+                    }
+                } else {
+                    JSONObject jsonObject = new JSONObject(message);
+                    processJsonObject(jsonObject, insertionPoints);
+                }
+            } catch (JSONException e) {
+                insertionPoints.add("FU" + message + "ZZ");
+            }
+        }
+
+        return insertionPoints;
+    }
+
+    private static void processJsonObject(JSONObject jsonObject, List<String> insertionPoints) {
+        Iterator<String> keys = jsonObject.keys();
+
+        while (keys.hasNext()) {
+            String key = keys.next();
+            Object value = jsonObject.get(key);
+    
+            // Create key modification
+            JSONObject keyInsertion = new JSONObject(jsonObject.toString());
+            keyInsertion.remove(key);
+            keyInsertion.put("FU" + key + "ZZ", value);
+            insertionPoints.add(keyInsertion.toString());
+    
+            if (value instanceof JSONObject) {
+                JSONObject nestedValue = (JSONObject) value;
+            
+                // Process nested object without modifying parent yet
+                List<String> nestedPoints = new ArrayList<>();
+                processJsonObject(nestedValue, nestedPoints);
+            
+                // For each nested modification, create a parent modification
+                for (String nestedModified : nestedPoints) {
+                    //JSONObject modifiedParent = new JSONObject(jsonObject.toString());
+                    //modifiedParent.put(key, new JSONObject(nestedModified));
+                    String modifiedParent = jsonObject.toString().replace(
+                        "\"" + key + "\":" + value.toString(),
+                        "\"" + key + "\":" + nestedModified 
+                    );
+                
+                    insertionPoints.add(modifiedParent.toString());
+                }
+            } 
+            else {
+                // Create value modification
+                JSONObject valueInsertion = new JSONObject(jsonObject.toString());
+            
+                if (value instanceof String) {
+                    valueInsertion.put(key, "FU" + value + "ZZ");
+                    insertionPoints.add(valueInsertion.toString());
+                } else {
+                    // For non-strings, we need to handle the value carefully
+                    String jsonString = valueInsertion.toString();
+                    String valueStr = value.toString();
+                    String modifiedJson = jsonString.replace(
+                        "\"" + key + "\":" + valueStr,
+                        "\"" + key + "\":FU" + valueStr + "ZZ"
+                    );
+
+                    insertionPoints.add(modifiedJson);
+                }
+            }
+        }
+    }
 }
 
 class WsFuzzable extends CustomScanIssue {

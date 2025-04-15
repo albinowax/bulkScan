@@ -11,6 +11,9 @@ import burp.api.montoya.ui.contextmenu.WebSocketMessage;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
+import org.json.JSONObject;
+import org.json.JSONException;
+
 class WsPayloadInjector {
     
     public WebSocketMessageImpl getWebSocketMessage() {
@@ -125,15 +128,43 @@ class WsPayloadInjector {
         int startI = base_message.indexOf("FU");
         int endI = base_message.indexOf("ZZ");
         String baseValue = base_message.substring(startI + 2, endI);
+
+        String ePayload;
         
         // i did implement this using regex first, however somehow it broke the fuzzing
         // this logic might appear slight different from the original, but it does the same
         // but since i could call or write a buldRequest method, this does something similar
         if (prefix == Probe.PREPEND) {
-            payload = base_message.substring(0, startI + 2) + payload + baseValue + base_message.substring(endI);
+            try {
+                new JSONObject(base_message);
+                String escapedPayload = JSONObject.quote(payload);
+                ePayload =  escapedPayload.substring(1, escapedPayload.length() - 1);
+            } catch (JSONException e) {
+                if (base_message.matches("^\\d+\\[\"[^\"]+\",\\s*\\{.*}]$")) {
+                    String escapedPayload = JSONObject.quote(payload);
+                    ePayload = escapedPayload.substring(1, escapedPayload.length() - 1);
+                } else {
+                    ePayload = payload;
+                }
+            }
+            
+            payload = base_message.substring(0, startI + 2) + ePayload + baseValue + base_message.substring(endI);
         }
         else if (prefix == Probe.APPEND) {
-            payload = base_message.substring(0, startI + 2) + baseValue + anchor + payload + base_message.substring(endI);
+            try {
+                new JSONObject(base_message);
+                String escapedPayload = JSONObject.quote(payload);
+                ePayload =  escapedPayload.substring(1, escapedPayload.length() - 1);
+            } catch (JSONException e) {
+                if (base_message.matches("^\\d+\\[\"[^\"]+\",\\s*\\{.*}]$")) {
+                    String escapedPayload = JSONObject.quote(payload);
+                    ePayload = escapedPayload.substring(1, escapedPayload.length() - 1);
+                } else {
+                    ePayload = payload;
+                }
+            }
+            
+            payload = base_message.substring(0, startI + 2) + baseValue + anchor + ePayload + base_message.substring(endI);
         }
         else if (prefix == Probe.REPLACE) {
              // payload = payload;
@@ -155,16 +186,43 @@ class WsPayloadInjector {
         int startI = baseMessageString.indexOf("FU");
         int endI = baseMessageString.indexOf("ZZ");
 
+        String ePayload;
         String modifiedMessage;
 
         if (random) {
             canary = BulkUtilities.generateCanary();
 
-            modifiedMessage = baseMessageString.substring(0, startI) + canary + payload + baseMessageString.substring(endI + 2);
+            try {
+                new JSONObject(baseMessageString);
+                String escapedPayload = JSONObject.quote(payload);
+                ePayload =  escapedPayload.substring(1, escapedPayload.length() - 1);
+            } catch (JSONException e) {
+                if (baseMessageString.matches("^\\d+\\[\"[^\"]+\",\\s*\\{.*}]$")) {
+                    String escapedPayload = JSONObject.quote(payload);
+                    ePayload = escapedPayload.substring(1, escapedPayload.length() - 1);
+                } else {
+                    ePayload = payload;
+                }
+            }
 
+            modifiedMessage = baseMessageString.substring(0, startI) + canary + ePayload + baseMessageString.substring(endI + 2);
             fPayload = ByteArray.byteArray(modifiedMessage);
         } else {
-            modifiedMessage = baseMessageString.substring(0, startI) + payload + baseMessageString.substring(endI + 2);
+
+            try {
+                new JSONObject(baseMessageString);
+                String escapedPayload = JSONObject.quote(payload);
+                ePayload =  escapedPayload.substring(1, escapedPayload.length() - 1);
+            } catch (JSONException e) {
+                if (baseMessageString.matches("^\\d+\\[\"[^\"]+\",\\s*\\{.*}]$")) {
+                    String escapedPayload = JSONObject.quote(payload);
+                    ePayload = escapedPayload.substring(1, escapedPayload.length() - 1);
+                } else {
+                    ePayload = payload;
+                }
+            }
+
+            modifiedMessage = baseMessageString.substring(0, startI) + ePayload + baseMessageString.substring(endI + 2);
             fPayload = ByteArray.byteArray(modifiedMessage);
         }
 
