@@ -27,7 +27,7 @@ public class WebSocketMessageImpl implements WebSocketMessage {
     private final List<ByteArray> responses;
     private final List<Long> responseTimes;
     private final List<MessageType> responseTypes;
-    private final long timeout; // window of time to
+    private final long timeout; // window of time to listen for incoming messages
 
     public enum MessageType {
         TEXT, BINARY
@@ -122,7 +122,7 @@ public class WebSocketMessageImpl implements WebSocketMessage {
         final MontoyaApi api = Utilities.montoyaApi;
 
         ByteArray payload;
-        // remove FUZZ placeholder in case it's still here, can happen sometimes
+        // remove FUZZ placeholder in case it's still here, happens on initialization
         Pattern pattern = Pattern.compile("FU(.*?)ZZ");
         Matcher matcher = pattern.matcher(payload_tmp.toString());
         if (matcher.find()) {
@@ -139,7 +139,6 @@ public class WebSocketMessageImpl implements WebSocketMessage {
         
             if (webSocketCreation.status() != ExtensionWebSocketCreationStatus.SUCCESS) {
                 Utilities.out("WebSocket creation failed: " + webSocketCreation.status());
-                Utilities.out(upgradeRequest.toString());
                 return;
             }
 
@@ -184,7 +183,7 @@ public class WebSocketMessageImpl implements WebSocketMessage {
                         extensionWebSocket.sendTextMessage(value);
                     }
                 }
-
+                
                 extensionWebSocket.sendTextMessage(payload.toString());
 
                 try {
