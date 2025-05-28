@@ -41,7 +41,7 @@ class BulkScanItem implements Runnable {
             }
         } catch (Throwable e) {
             if (!e.getMessage().contains("java.net.UnknownHostException")) {
-                BulkUtilities.showError(e);
+                Utilities.showError(e);
             }
         }
     }

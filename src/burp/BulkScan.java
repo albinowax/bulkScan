@@ -172,7 +172,7 @@ class BulkScan implements Runnable  {
             BulkUtilities.out("Queued " + queued + " attacks from " + totalRequests + " requests in " + (System.currentTimeMillis() - start) / 1000 + " seconds");
         } catch (Exception e) {
             BulkUtilities.out("Queue aborted due to exception");
-            BulkUtilities.showError(e);
+            Utilities.showError(e);
         }
     }
 
