@@ -152,6 +152,7 @@ public class WebSocketMessageImpl implements WebSocketMessage {
                             responseTimes.add(System.nanoTime() - startTime);
                             responses.add(ByteArray.byteArray(message.payload()));
                             responseTypes.add(MessageType.TEXT);
+                            Utilities.out(message.payload());
                         }
                     }
 
@@ -161,6 +162,7 @@ public class WebSocketMessageImpl implements WebSocketMessage {
                             responseTimes.add(System.nanoTime() - startTime);
                             responses.add(message.payload());
                             responseTypes.add(MessageType.BINARY);
+                            Utilities.out(message.payload().toString());
                         }
                     }
                 });
@@ -181,13 +183,15 @@ public class WebSocketMessageImpl implements WebSocketMessage {
                     String[] preMessages = preMessage.split("FUZZ");
                     for (String value : preMessages) {
                         extensionWebSocket.sendTextMessage(value);
+                        Utilities.out(value.toString());
                     }
                 }
                 
                 extensionWebSocket.sendTextMessage(payload.toString());
+                Utilities.out(payload.toString());
 
                 try {
-                    Thread.sleep(timeout * 1000);
+                    Thread.sleep(timeout);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 } finally {

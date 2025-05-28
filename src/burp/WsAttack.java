@@ -3,6 +3,8 @@ package burp;
 import java.util.*;
 
 import burp.api.montoya.core.ByteArray;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 
 class WsAttack {
     final static int UNINITIALISED = -1;
@@ -126,9 +128,15 @@ class WsAttack {
     private WsAttack add(WebSocketMessageImpl webSocketMessage, String anchor) {
         assert (firstRequest != null);
 
-        for (ByteArray responseByteArray : webSocketMessage.responses()) {
-            byte[] response = responseByteArray.getBytes();
-            responseKeywords.updateWith(response);
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            for (ByteArray responseByteArray : webSocketMessage.responses()) {
+                baos.write(responseByteArray.getBytes());
+            }
+
+            responseKeywords.updateWith(baos.toByteArray());
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to concatenate responses", e);
         }
         responseDetails.updateWith(webSocketMessage);
 
