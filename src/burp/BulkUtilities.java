@@ -1,5 +1,6 @@
 package burp;
 
+import burp.api.montoya.core.BurpSuiteEdition;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
 
@@ -20,7 +21,9 @@ public class BulkUtilities extends Utilities {
     }
 
     public static void registerContextMenu() {
-        montoyaApi.userInterface().registerContextMenuItemsProvider(new BulkScanContextMenu(BulkScan.scans));
+        if (!Utilities.montoyaApi.burpSuite().version().edition().equals(BurpSuiteEdition.ENTERPRISE_EDITION)) {
+            montoyaApi.userInterface().registerContextMenuItemsProvider(new BulkScanContextMenu(BulkScan.scans));
+        }
     }
 
     static boolean similarIsh(Attack noBreakGroup, Attack breakGroup, Attack noBreak, Attack doBreak) {

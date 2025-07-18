@@ -161,6 +161,7 @@ class BulkScan implements Runnable  {
                     }
 
                     cache.add(host);
+                    left.remove();
                     BulkUtilities.log("Adding request on " + host + " to queue");
                     queued++;
                     taskEngine.execute(new BulkScanItem(scan, req, start));
