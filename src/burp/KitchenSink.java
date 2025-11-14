@@ -15,6 +15,7 @@ public class KitchenSink extends ParamScan {
         BulkUtilities.out("Kicking off request scans");
         for (Scan scan: BulkScan.scans) {
             if (scan == this) {
+                BulkUtilities.out("Skipping scan to avoid recursion: " + scan.name);
                 continue;
             }
             BulkUtilities.out("Queueing request scan: "+scan.name);
