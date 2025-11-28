@@ -21,7 +21,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-class BulkScan implements Runnable  {
+public class BulkScan implements Runnable  {
     private IHttpRequestResponse[] reqs;
     private Scan scan;
     private boolean useMinedHeader = false;

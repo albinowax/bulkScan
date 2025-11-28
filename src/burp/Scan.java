@@ -8,12 +8,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-abstract class Scan implements IScannerCheck {
+public abstract class Scan implements IScannerCheck {
     static ZgrabLoader loader = null;
 
     public static Scan lastScan = null;
 
-    String name = "";
+    public String name = "";
     SettingsBox scanSettings;
 
     Scan(String name) {
