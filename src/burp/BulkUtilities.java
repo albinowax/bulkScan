@@ -26,6 +26,12 @@ public class BulkUtilities extends Utilities {
         }
     }
 
+    public static void registerHotkeys() {
+        if (!Utilities.montoyaApi.burpSuite().version().edition().equals(BurpSuiteEdition.ENTERPRISE_EDITION)) {
+            new BulkScanHotkeys().register(montoyaApi, BulkScan.scans, name);
+        }
+    }
+
     static boolean similarIsh(Attack noBreakGroup, Attack breakGroup, Attack noBreak, Attack doBreak) {
 
         for (String key: noBreakGroup.getPrint().keySet()) {
