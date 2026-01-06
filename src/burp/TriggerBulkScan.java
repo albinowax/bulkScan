@@ -21,6 +21,18 @@ class TriggerBulkScan implements ActionListener {
         this.scanMinedHeader = scanMinedHeader;
     }
 
+    public static void launchScan(Scan scan, IHttpRequestResponse[] reqs, boolean scanMinedHeader) {
+        ConfigurableSettings config = BulkUtilities.globalSettings.showSettings(scan.scanSettings.getSettings());
+        if (config != null) {
+            BulkScan bulkScan = new BulkScan(scan, reqs, config, scanMinedHeader);
+            (new Thread(bulkScan)).start();
+        }
+    }
+
+    public static void launchScan(Scan scan, IHttpRequestResponse[] reqs) {
+        launchScan(scan, reqs, false);
+    }
+
     public void actionPerformed(ActionEvent e) {
         if (this.reqs == null) {
             this.reqs = new IHttpRequestResponse[issues.length];
@@ -34,14 +46,8 @@ class TriggerBulkScan implements ActionListener {
                 } else {
                     reqs[i] = issue.getHttpMessages()[0];
                 }
-                //reqs[i] = new Req(BulkUtilities.helpers.buildHttpRequest(issue.getUrl()), null, issue.getHttpService());
             }
         }
-
-        ConfigurableSettings config = BulkUtilities.globalSettings.showSettings(scan.scanSettings.getSettings());
-        if (config != null) {
-            BulkScan bulkScan = new BulkScan(scan, reqs, config, scanMinedHeader);
-            (new Thread(bulkScan)).start();
-        }
+        launchScan(scan, reqs, scanMinedHeader);
     }
 }
