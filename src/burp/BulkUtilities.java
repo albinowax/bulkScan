@@ -23,7 +23,11 @@ public class BulkUtilities extends Utilities {
     public static void registerContextMenu() {
         if (!Utilities.montoyaApi.burpSuite().version().edition().equals(BurpSuiteEdition.ENTERPRISE_EDITION)) {
             montoyaApi.userInterface().registerContextMenuItemsProvider(new BulkScanContextMenu(BulkScan.scans));
-            new BulkScanHotkeys().register(montoyaApi, BulkScan.scans, name);
+            try {
+                new BulkScanHotkeys().register(montoyaApi, BulkScan.scans, name);
+            } catch (Throwable e) {
+                err("Hotkey registration failed (API may not be available): " + e.getMessage());
+            }
         }
     }
 
