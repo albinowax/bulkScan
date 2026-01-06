@@ -96,60 +96,12 @@ public class BulkScanHotkeys {
             return;
         }
 
-        // Convert to IHttpRequestResponse array
+        // Convert to IHttpRequestResponse array using shared converter
         IHttpRequestResponse[] reqs = selected.stream()
-                .map(BulkScanHotkeys::convertToIHttpRequestResponse)
+                .map(BulkScanContextMenu::convertToIHttpRequestResponse)
                 .toArray(IHttpRequestResponse[]::new);
 
         TriggerBulkScan.launchScan(scan, reqs);
-    }
-
-    private static IHttpRequestResponse convertToIHttpRequestResponse(HttpRequestResponse httpRequestResponse) {
-        return new IHttpRequestResponse() {
-            @Override
-            public byte[] getRequest() {
-                return httpRequestResponse.request() == null ? null : httpRequestResponse.request().toByteArray().getBytes();
-            }
-
-            @Override
-            public void setRequest(byte[] message) {}
-
-            @Override
-            public byte[] getResponse() {
-                return httpRequestResponse.response() == null ? null : httpRequestResponse.response().toByteArray().getBytes();
-            }
-
-            @Override
-            public void setResponse(byte[] message) {}
-
-            @Override
-            public String getComment() {
-                return "";
-            }
-
-            @Override
-            public void setComment(String comment) {}
-
-            @Override
-            public String getHighlight() {
-                return "";
-            }
-
-            @Override
-            public void setHighlight(String color) {}
-
-            @Override
-            public IHttpService getHttpService() {
-                return BulkUtilities.callbacks.getHelpers().buildHttpService(
-                        httpRequestResponse.httpService().host(),
-                        httpRequestResponse.httpService().port(),
-                        httpRequestResponse.httpService().secure()
-                );
-            }
-
-            @Override
-            public void setHttpService(IHttpService httpService) {}
-        };
     }
 
     private String allocateNextKey() {

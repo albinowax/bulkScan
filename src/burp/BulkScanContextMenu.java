@@ -91,7 +91,7 @@ class BulkScanContextMenu implements ContextMenuItemsProvider {
             }
         };
     }
-    private static IHttpRequestResponse convertToIHttpRequestResponse(HttpRequestResponse customHttpRequestResponse) {
+    static IHttpRequestResponse convertToIHttpRequestResponse(HttpRequestResponse customHttpRequestResponse) {
         return new IHttpRequestResponse() {
             @Override
             public byte[] getRequest() {
