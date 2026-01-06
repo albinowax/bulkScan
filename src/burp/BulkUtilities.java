@@ -23,11 +23,6 @@ public class BulkUtilities extends Utilities {
     public static void registerContextMenu() {
         if (!Utilities.montoyaApi.burpSuite().version().edition().equals(BurpSuiteEdition.ENTERPRISE_EDITION)) {
             montoyaApi.userInterface().registerContextMenuItemsProvider(new BulkScanContextMenu(BulkScan.scans));
-        }
-    }
-
-    public static void registerHotkeys() {
-        if (!Utilities.montoyaApi.burpSuite().version().edition().equals(BurpSuiteEdition.ENTERPRISE_EDITION)) {
             new BulkScanHotkeys().register(montoyaApi, BulkScan.scans, name);
         }
     }
