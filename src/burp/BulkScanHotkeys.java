@@ -3,21 +3,11 @@ package burp;
 import burp.api.montoya.MontoyaApi;
 import burp.api.montoya.http.message.HttpRequestResponse;
 import burp.api.montoya.ui.hotkey.HotKey;
-import burp.api.montoya.ui.hotkey.HotKeyContext;
 import burp.api.montoya.ui.hotkey.HotKeyEvent;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class BulkScanHotkeys {
-
-    private static final HotKeyContext[] CONTEXTS = {
-            HotKeyContext.HTTP_MESSAGE_EDITOR,
-            HotKeyContext.PROXY_HTTP_HISTORY,
-            HotKeyContext.INTRUDER_ATTACK_RESULTS,
-            HotKeyContext.ORGANIZER_ENTRIES,
-            HotKeyContext.SITE_MAP_CONTENTS_TABLE
-    };
 
     private static final String[][] KEY_PATTERNS = {
             // Pattern 1: Ctrl+Alt+Shift+F1-F12
@@ -38,7 +28,6 @@ public class BulkScanHotkeys {
 
     public void register(MontoyaApi api, List<Scan> scans, String extensionName) {
         for (Scan scan : scans) {
-            String hotKeyName = extensionName + ": " + scan.name;
             String keyBinding = allocateNextKey();
 
             if (keyBinding == null) {
@@ -46,7 +35,7 @@ public class BulkScanHotkeys {
                 continue;
             }
 
-            boolean registered = tryRegisterForAllContexts(api, scan, hotKeyName, keyBinding);
+            boolean registered = tryRegister(api, scan, keyBinding);
 
             // If registration failed, try fallback keys
             while (!registered && currentKeyIndex < getTotalKeys()) {
@@ -55,24 +44,21 @@ public class BulkScanHotkeys {
                     BulkUtilities.err("Failed to register hotkey for " + scan.name + ": all key combinations exhausted");
                     break;
                 }
-                registered = tryRegisterForAllContexts(api, scan, hotKeyName, keyBinding);
+                registered = tryRegister(api, scan, keyBinding);
             }
 
             if (registered) {
-                BulkUtilities.out("Registered hotkey '" + hotKeyName + "' with binding: " + keyBinding);
+                BulkUtilities.out("Registered hotkey '" + scan.name + "' with binding: " + keyBinding);
             }
         }
     }
 
-    private boolean tryRegisterForAllContexts(MontoyaApi api, Scan scan, String hotKeyName, String keyBinding) {
+    private boolean tryRegister(MontoyaApi api, Scan scan, String keyBinding) {
         try {
-            for (HotKeyContext context : CONTEXTS) {
-                api.userInterface().registerHotKeyHandler(
-                        context,
-                        HotKey.hotKey(hotKeyName, keyBinding),
-                        event -> handleHotKey(event, scan, context)
-                );
-            }
+            api.userInterface().registerHotKeyHandler(
+                    HotKey.hotKey(scan.name, keyBinding),
+                    event -> handleHotKey(event, scan)
+            );
             return true;
         } catch (Exception e) {
             // Key binding collision - try next key
@@ -80,13 +66,11 @@ public class BulkScanHotkeys {
         }
     }
 
-    private void handleHotKey(HotKeyEvent event, Scan scan, HotKeyContext context) {
+    private void handleHotKey(HotKeyEvent event, Scan scan) {
         List<HttpRequestResponse> selected;
 
-        if (context == HotKeyContext.HTTP_MESSAGE_EDITOR) {
-            if (event.messageEditorRequestResponse().isEmpty()) {
-                return;
-            }
+        // Try message editor first
+        if (event.messageEditorRequestResponse().isPresent()) {
             selected = List.of(event.messageEditorRequestResponse().get().requestResponse());
         } else {
             selected = event.selectedRequestResponses();
